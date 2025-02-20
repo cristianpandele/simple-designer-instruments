@@ -20,7 +20,6 @@ void Engine::Init(const float sample_rate) {
   noise_.SetAmp(dbfs2lin(-90.0f));
 
   for (unsigned int i = 0; i < 2; i++) {
-
     strings_[i].Init(sample_rate);
     strings_[i].SetBrightness(0.98f);
     strings_[i].SetFreq(mtof(40.0f));
@@ -96,6 +95,8 @@ void Engine::SetReverbFeedback(const float time) { verb_->SetFeedback(time); }
 
 void Engine::SetOutputLevel(const float level) { output_level_ = level; }
 
+void Engine::SetInputGain(const float gain) { input_gain_ = gain * 10; }
+
 void Engine::Process(float in, float &outL, float &outR) {
   // --- Update audio-rate-smoothed control params ---
 
@@ -106,20 +107,22 @@ void Engine::Process(float in, float &outL, float &outR) {
   float inL, inR, sampL, sampR, echoL, echoR, verbL, verbR;
   const float noise_samp = noise_.Process();
 
+  const float inGain = in * input_gain_;
+
   // ---> Feedback Loop
 
   // Get noise + feedback output
-  inL = fb_delayline_[0].Read(fb_delay_samp_) + noise_samp + in;
+  inL = fb_delayline_[0].Read(fb_delay_samp_) + noise_samp;
   inR = fb_delayline_[1].Read(daisysp::fmax(1.0f, fb_delay_samp_ - 4.f)) +
-        noise_samp + in;
+        noise_samp;
 
   // Process through KS resonator
   sampL = strings_[0].Process(inL);
   sampR = strings_[1].Process(inR);
 
   // Distort + Clip
-  sampL = overdrive_[0].Process(sampL);
-  sampR = overdrive_[1].Process(sampR);
+  sampL = overdrive_[0].Process(sampL + inGain);
+  sampR = overdrive_[1].Process(sampR + inGain);
 
   // Filter in feedback loop
   fb_lpf_.ProcessStereo(sampL, sampR);

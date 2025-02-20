@@ -27,7 +27,7 @@ public:
 
 private:
 
-    static const size_t kNumAdcChannels = 11;
+    static const size_t kNumAdcChannels = 12;
 
     /// Identifies a parameter of the synth engine
     /// The order here is the same order as the ADC pin configs in the cpp file
@@ -42,7 +42,8 @@ private:
         EchoDelaySend,      // 7
         EchoDelayTime,      // 8
         EchoDelayFeedback,  // 9
-        OutputVolume        // 10
+        OutputVolume,       // 10
+        InputGain           // 11
     };
 
     using Parameters = ParameterRegistry<Parameter>;

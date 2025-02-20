@@ -41,6 +41,8 @@ class Engine {
 
         void SetOutputLevel(const float level);
 
+        void SetInputGain(const float gain);
+
         void Process(float in, float &outL, float &outR);
 
     private:
@@ -54,6 +56,7 @@ class Engine {
         float echo_send_ = 0.0f;
         float verb_mix_ = 0.0f;
         float output_level_ = 0.5f;
+        float input_gain_ = 1.0f;
 
         float fb_delay_smooth_coef_;
         float fb_delay_samp_ = 1000.f;
