@@ -8,7 +8,7 @@
 #include <arm_math.h>
 #endif
 
-namespace infrasonic {
+namespace majmaa {
 
 inline float dbfs2lin(float dbfs) {
     return daisysp::pow10f(dbfs * 0.05f);

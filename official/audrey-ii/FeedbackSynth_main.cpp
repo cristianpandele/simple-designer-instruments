@@ -2,7 +2,7 @@
 #include "FeedbackSynthEngine.h"
 #include "FeedbackSynthControls.h"
 
-using namespace infrasonic;
+using namespace majmaa;
 using namespace daisy;
 using namespace daisysp;
 

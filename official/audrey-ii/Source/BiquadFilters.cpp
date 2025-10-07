@@ -2,7 +2,7 @@
 #include <cmath>
 #include "DSPUtils.h"
 
-using namespace infrasonic;
+using namespace majmaa;
 
 const BiquadSection::Coefficients BiquadSection::CalculateCoefficients(const FilterType type, 
                                                                        const float sample_rate,
@@ -11,7 +11,7 @@ const BiquadSection::Coefficients BiquadSection::CalculateCoefficients(const Fil
 {
    Coefficients coefs; 
     float norm;
-    const float K = infrasonic::tanf(PI_F * cutoff_hz * (1.0f / sample_rate));
+    const float K = majmaa::tanf(PI_F * cutoff_hz * (1.0f / sample_rate));
     const float Ksq = K * K;
 
     float &b0 = coefs[0];

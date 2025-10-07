@@ -6,7 +6,7 @@
 #include "BiquadFilters.h"
 #include "DSPUtils.h"
 
-namespace infrasonic {
+namespace majmaa {
 
 /**
  * @brief

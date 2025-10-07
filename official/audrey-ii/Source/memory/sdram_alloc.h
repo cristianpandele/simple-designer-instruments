@@ -6,7 +6,7 @@
 #include <atomic>
 #include <new>
 
-namespace infrasonic
+namespace majmaa
 {
     /**
      * @brief
@@ -56,6 +56,6 @@ namespace infrasonic
             std::atomic_size_t pool_pos_ = {0};
     };
 
-} // namespace infrasonic
+} // namespace majmaa
 
 #endif

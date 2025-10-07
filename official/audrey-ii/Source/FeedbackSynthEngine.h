@@ -12,7 +12,7 @@
 #include <dev/sdram.h>
 #endif
 
-namespace infrasonic {
+namespace majmaa {
 namespace FeedbackSynth {
 
 class Engine {
@@ -59,7 +59,7 @@ class Engine {
         float fb_delay_samp_ = 1000.f;
         float fb_delay_samp_target_ = 64.f;
 
-        infrasonic::KarplusString strings_[2];
+        majmaa::KarplusString strings_[2];
         daisysp::WhiteNoise noise_;
         daisysp::DelayLine<float, kMaxFeedbackDelaySamp> fb_delayline_[2];
         daisysp::Overdrive overdrive_[2];

@@ -7,7 +7,7 @@
 #include "FeedbackSynthEngine.h"
 #include "ParameterRegistry.h"
 
-namespace infrasonic {
+namespace majmaa {
 namespace FeedbackSynth {
 
 class Controls {

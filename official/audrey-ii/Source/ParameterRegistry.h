@@ -8,7 +8,7 @@
 #include "SmoothedValue.h"
 #include "DSPUtils.h"
 
-namespace infrasonic {
+namespace majmaa {
 
 /**
  * @brief

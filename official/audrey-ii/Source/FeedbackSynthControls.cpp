@@ -1,8 +1,8 @@
 #include "FeedbackSynthControls.h"
 #include <functional>
 
-using namespace infrasonic;
-using namespace infrasonic::FeedbackSynth;
+using namespace majmaa;
+using namespace majmaa::FeedbackSynth;
 using namespace daisy;
 
 ////////////// SIMPLE X DAISY PINOUT CHEATSHEET ///////////////

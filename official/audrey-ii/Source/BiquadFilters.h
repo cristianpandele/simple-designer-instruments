@@ -6,7 +6,7 @@
 #include <array>
 #include <daisysp.h>
 
-namespace infrasonic {
+namespace majmaa {
 
 /**
  *  Single precision 2nd order biquad filter section with support for stereo processing.

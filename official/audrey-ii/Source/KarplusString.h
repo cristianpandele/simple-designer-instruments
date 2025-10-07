@@ -5,13 +5,13 @@
 #include <stdint.h>
 #include <daisysp.h>
 
-namespace infrasonic
+namespace majmaa
 {
 /**  
  * Modified version of KarplusString class from DaisySP:
  *  - Increase delay line length for very low pitches 
  *  - Remove nonlinearity processing (not needed for feedback synth)
- *  - Re-namespaced to infrasonic
+ *  - Re-namespaced to majmaa
  * 
  *  Original code licensed as MIT Copyright (c) 2020 Electrosmith, Corp.
  *  (see DaisySP/LICENSE)
@@ -71,6 +71,6 @@ class KarplusString
     float src_phase_;
     float out_sample_[2];
 };
-} // namespace infrasonic
+} // namespace majmaa
 
 #endif

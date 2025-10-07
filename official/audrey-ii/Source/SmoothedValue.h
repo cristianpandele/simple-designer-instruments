@@ -5,7 +5,7 @@
 #include <daisysp.h>
 #include "DSPUtils.h"
 
-namespace infrasonic {
+namespace majmaa {
 
 class SmoothedValue {
 

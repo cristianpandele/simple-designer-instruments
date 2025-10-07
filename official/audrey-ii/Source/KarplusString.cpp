@@ -2,7 +2,7 @@
 #include "KarplusString.h"
 #include <stdlib.h>
 
-using namespace infrasonic;
+using namespace majmaa;
 
 void KarplusString::Init(float sample_rate)
 {
