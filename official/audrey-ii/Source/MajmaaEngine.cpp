@@ -96,7 +96,7 @@ void Engine::SetReverbFeedback(const float time) { verb_->SetFeedback(time); }
 
 void Engine::SetOutputLevel(const float level) { output_level_ = level; }
 
-void Engine::Process(float in, float &outL, float &outR) {
+void Engine::Process(float &outL, float &outR) {
   // --- Update audio-rate-smoothed control params ---
 
   fonepole(fb_delay_samp_, fb_delay_samp_target_, fb_delay_smooth_coef_);
@@ -109,9 +109,9 @@ void Engine::Process(float in, float &outL, float &outR) {
   // ---> Feedback Loop
 
   // Get noise + feedback output
-  inL = fb_delayline_[0].Read(fb_delay_samp_) + noise_samp + in;
+  inL = fb_delayline_[0].Read(fb_delay_samp_) + noise_samp;
   inR = fb_delayline_[1].Read(daisysp::fmax(1.0f, fb_delay_samp_ - 4.f)) +
-        noise_samp + in;
+        noise_samp;
 
   // Process through KS resonator
   sampL = strings_[0].Process(inL);

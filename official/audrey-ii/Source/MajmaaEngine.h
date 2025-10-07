@@ -41,7 +41,7 @@ class Engine {
 
         void SetOutputLevel(const float level);
 
-        void Process(float in, float &outL, float &outR);
+        void Process(float &outL, float &outR);
 
     private:
         // long enough for 250ms at 48kHz

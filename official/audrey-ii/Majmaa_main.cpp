@@ -14,12 +14,12 @@ static MajmaaSynth::Engine engine;
 static MajmaaSynth::Controls controls;
 static Limiter limiter[2];
 
-void AudioCallback(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, size_t size)
+void AudioCallback(AudioHandle::InputBuffer /* in */, AudioHandle::OutputBuffer out, size_t size)
 {
     controls.Update(hw);
     controls.Process();
     for (size_t i=0; i<size; i++) {
-        engine.Process(IN_L[i], OUT_L[i], OUT_R[i]);
+        engine.Process(OUT_L[i], OUT_R[i]);
     }
     limiter[0].ProcessBlock(OUT_L, size, 0.7f);
     limiter[1].ProcessBlock(OUT_R, size, 0.7f);
