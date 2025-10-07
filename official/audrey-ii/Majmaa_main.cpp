@@ -28,6 +28,7 @@ void AudioCallback(AudioHandle::InputBuffer /* in */, AudioHandle::OutputBuffer 
 int main(void)
 {
     hw.Init();
+
     hw.SetAudioSampleRate(kSampleRate);
     hw.SetAudioBlockSize(kBlockSize);
 
