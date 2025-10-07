@@ -43,6 +43,8 @@ private:
 
     Parameters params_;
 
+    daisy::AnalogControl controls_[kNumAdcChannels];
+
     daisy::Mpr121I2C mpr121_[kNumMprInstances];
 
     void initADCs(daisy::DaisySeed &hw);

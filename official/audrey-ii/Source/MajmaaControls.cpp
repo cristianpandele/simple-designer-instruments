@@ -38,7 +38,9 @@ static constexpr Pin kI2CSdaPin                  = seed::D12;
 static constexpr Pin kI2CSclPin                  = seed::D11;
 
 void Controls::Init(DaisySeed &hw, Engine &engine) {
-    params_.Init(hw.AudioSampleRate() / hw.AudioBlockSize());
+
+    const float kProcessRate = hw.AudioSampleRate() / hw.AudioBlockSize();
+    params_.Init(kProcessRate);
 
     // --- MPR121 (I2C) ---
     Mpr121I2C::Config mpr_cfg;
@@ -54,15 +56,22 @@ void Controls::Init(DaisySeed &hw, Engine &engine) {
         mpr121_[i].Init(mpr_cfg);
     }
 
+    // --- Analog Controls ---
+    constexpr float kPotSmoothTime = 0.02f;
+
+    for (size_t i = 0; i < kNumAdcChannels; i++) {
+        controls_[i].Init(hw.adc.GetPtr(i), kProcessRate, false, false, kPotSmoothTime);
+    }
+
     initADCs(hw);
     registerParams(engine);
 }
 
 void Controls::Update(DaisySeed &hw) {
-    params_.UpdateNormalized(Parameter::Accent,             hw.adc.GetFloat(0));
-    params_.UpdateNormalized(Parameter::Brightness,         hw.adc.GetFloat(1));
-    params_.UpdateNormalized(Parameter::Damping,            hw.adc.GetFloat(2));
-    params_.UpdateNormalized(Parameter::Structure,          hw.adc.GetFloat(3));
+    params_.UpdateNormalized(Parameter::Accent,             hw.adc.GetFloat(static_cast<uint8_t>(Parameter::Accent)));
+    params_.UpdateNormalized(Parameter::Brightness,         hw.adc.GetFloat(static_cast<uint8_t>(Parameter::Brightness)));
+    params_.UpdateNormalized(Parameter::Damping,            hw.adc.GetFloat(static_cast<uint8_t>(Parameter::Damping)));
+    params_.UpdateNormalized(Parameter::Structure,          hw.adc.GetFloat(static_cast<uint8_t>(Parameter::Structure)));
 }
 
 void Controls::initADCs(DaisySeed &hw) {
