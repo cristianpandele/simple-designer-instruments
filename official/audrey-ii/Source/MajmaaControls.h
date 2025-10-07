@@ -27,22 +27,15 @@ public:
 
 private:
 
-    static const size_t kNumAdcChannels = 11;
+    static const size_t kNumAdcChannels = 4;
 
     /// Identifies a parameter of the synth engine
     /// The order here is the same order as the ADC pin configs in the cpp file
     enum class Parameter : uint8_t {
-        Frequency           = 0,
-        FeedbackGain,       // 1
-        FeedbackBody,       // 2
-        FeedbackLPFCutoff,  // 3
-        FeedbackHPFCutoff,  // 4
-        ReverbMix,          // 5
-        ReverbDecay,        // 6
-        EchoDelaySend,      // 7
-        EchoDelayTime,      // 8
-        EchoDelayFeedback,  // 9
-        OutputVolume        // 10
+        Accent              = 0,
+        Brightness,         // 1
+        Damping,            // 2
+        Structure           // 3
     };
 
     using Parameters = ParameterRegistry<Parameter>;

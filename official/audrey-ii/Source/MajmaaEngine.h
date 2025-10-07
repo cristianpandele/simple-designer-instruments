@@ -25,21 +25,11 @@ class Engine {
 
         void SetStringPitch(const float nn);
 
-        void SetFeedbackGain(const float gain_dbfs);
+        void SetAccent(const float accent);
 
-        void SetFeedbackDelay(const float delay_s);
-        void SetFeedbackLPFCutoff(const float cutoff_hz);
-        void SetFeedbackHPFCutoff(const float cutoff_hz);
-
-        void SetEchoDelayTime(const float echo_time);
-        void SetEchoDelayFeedback(const float echo_fb);
-        void SetEchoDelaySendAmount(const float echo_send);
-
-        // Both range 0-1
-        void SetReverbMix(const float mix);
-        void SetReverbFeedback(const float time);
-
-        void SetOutputLevel(const float level);
+        void SetBrightness(const float brightness);
+        void SetDamping(const float damping);
+        void SetStructure(const float structure);
 
         void Process(float &outL, float &outR);
 

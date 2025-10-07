@@ -56,45 +56,21 @@ void Engine::SetStringPitch(const float nn) {
   strings_[1].SetFreq(freq);
 }
 
-void Engine::SetFeedbackGain(const float gain_db) {
-  fb_gain_ = dbfs2lin(gain_db);
+void Engine::SetAccent(const float accent) {
+  /**/
 }
 
-void Engine::SetFeedbackDelay(const float delay_s) {
-  fb_delay_samp_target_ =
-      DSY_CLAMP(delay_s * sample_rate_, 1.0f,
-                static_cast<float>(kMaxFeedbackDelaySamp - 1));
+void Engine::SetBrightness(const float brightness) {
+  /**/
 }
 
-void Engine::SetFeedbackLPFCutoff(const float cutoff_hz) {
-  fb_lpf_.SetCutoff(cutoff_hz);
+void Engine::SetDamping(const float damping) {
+  /**/
 }
 
-void Engine::SetFeedbackHPFCutoff(const float cutoff_hz) {
-  fb_hpf_.SetCutoff(cutoff_hz);
+void Engine::SetStructure(const float structure) {
+  /**/
 }
-
-void Engine::SetEchoDelayTime(const float echo_time) {
-  echo_delay_[0]->SetDelayTime(echo_time);
-  echo_delay_[1]->SetDelayTime(echo_time);
-}
-
-void Engine::SetEchoDelayFeedback(const float echo_fb) {
-  echo_delay_[0]->SetFeedback(echo_fb);
-  echo_delay_[1]->SetFeedback(echo_fb);
-}
-
-void Engine::SetEchoDelaySendAmount(const float echo_send) {
-  echo_send_ = echo_send;
-}
-
-void Engine::SetReverbMix(const float mix) {
-  verb_mix_ = fclamp(mix, 0.0f, 1.0f);
-}
-
-void Engine::SetReverbFeedback(const float time) { verb_->SetFeedback(time); }
-
-void Engine::SetOutputLevel(const float level) { output_level_ = level; }
 
 void Engine::Process(float &outL, float &outR) {
   // --- Update audio-rate-smoothed control params ---
