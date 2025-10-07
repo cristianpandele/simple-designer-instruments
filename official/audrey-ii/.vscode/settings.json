@@ -91,6 +91,19 @@
         "stop_token": "cpp",
         "arm_common_tables.h": "c",
         "ranges": "cpp",
-        "fstream": "cpp"
-    }
+        "fstream": "cpp",
+        "forward_list": "cpp",
+        "unordered_set": "cpp",
+        "shared_mutex": "cpp",
+        "cassert": "cpp",
+        "usbh_ioreq.h": "c",
+        "usbh_def.h": "c",
+        "transform_functions.h": "c"
+    },
+    "cSpell.words": [
+        "Sysex"
+    ],
+    "editor.tabSize": 2,
+    "cortex-debug.variableUseNaturalFormat": true,
+    "C_Cpp.default.compilerPath": "/usr/local/bin/arm-none-eabi-g++"
 }
