@@ -25,3 +25,11 @@ CPP_SOURCES = \
 # Core location, and generic Makefile.
 SYSTEM_FILES_DIR = $(LIBDAISY_DIR)/core
 include $(SYSTEM_FILES_DIR)/Makefile
+
+libs:
+	cd $(LIBDAISY_DIR) && $(MAKE)
+	cd $(DAISYSP_DIR) && $(MAKE)
+
+clean-libs:
+	cd $(LIBDAISY_DIR) && $(MAKE) clean
+	cd $(DAISYSP_DIR) && $(MAKE) clean
