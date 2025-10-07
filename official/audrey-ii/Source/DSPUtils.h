@@ -1,6 +1,6 @@
 #pragma once
-#ifndef INFS_DSPUTILS_H
-#define INFS_DSPUTILS_H
+#ifndef DSPUTILS_H
+#define DSPUTILS_H
 
 #include <cmath>
 #include <Utility/dsp.h>

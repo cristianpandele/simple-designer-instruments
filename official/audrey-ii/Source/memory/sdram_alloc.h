@@ -1,6 +1,6 @@
 #pragma once
-#ifndef INFS_SDRAM_ALLOC_H
-#define INFS_SDRAM_ALLOC_H
+#ifndef SDRAM_ALLOC_H
+#define SDRAM_ALLOC_H
 
 #include <stddef.h>
 #include <atomic>

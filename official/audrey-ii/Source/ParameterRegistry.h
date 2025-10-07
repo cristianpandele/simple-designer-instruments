@@ -1,6 +1,6 @@
 #pragma once
-#ifndef INFS_CONTROLS_H
-#define INFS_CONTROLS_H
+#ifndef CONTROLS_H
+#define CONTROLS_H
 
 #include <functional>
 #include <unordered_map>

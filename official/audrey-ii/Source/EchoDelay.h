@@ -1,6 +1,6 @@
 #pragma once
-#ifndef INFS_ECHODELAY_H
-#define INFS_ECHODELAY_H
+#ifndef ECHODELAY_H
+#define ECHODELAY_H
 
 #include <daisysp.h>
 #include "BiquadFilters.h"

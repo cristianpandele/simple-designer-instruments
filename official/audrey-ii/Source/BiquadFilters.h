@@ -1,6 +1,6 @@
 #pragma once
-#ifndef INFS_BIQUADFILTERS_H
-#define INFS_BIQUADFILTERS_H
+#ifndef BIQUADFILTERS_H
+#define BIQUADFILTERS_H
 
 #include <cassert>
 #include <array>

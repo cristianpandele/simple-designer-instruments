@@ -1,6 +1,6 @@
 #pragma once
-#ifndef INFS_MajmaaCONTROLS_H
-#define INFS_MajmaaCONTROLS_H
+#ifndef MajmaaCONTROLS_H
+#define MajmaaCONTROLS_H
 
 #include <daisy.h>
 #include <daisy_seed.h>

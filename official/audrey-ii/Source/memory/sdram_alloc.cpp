@@ -3,14 +3,14 @@
 #include <type_traits>
 #include "dev/sdram.h"
 
-#ifndef INFS_SDRAM_POOL_SIZE
+#ifndef SDRAM_POOL_SIZE
     // 32 MiB (half of SDRAM) by default
-    #define INFS_SDRAM_POOL_SIZE (32 * 1024 * 1024) 
+    #define SDRAM_POOL_SIZE (32 * 1024 * 1024) 
 #endif
 
 namespace majmaa
 {
-    std::aligned_storage<INFS_SDRAM_POOL_SIZE>::type DSY_SDRAM_BSS sdram_pool;
+    std::aligned_storage<SDRAM_POOL_SIZE>::type DSY_SDRAM_BSS sdram_pool;
 }
 
 using namespace majmaa;
@@ -30,7 +30,7 @@ void* SDRAM::allocate_raw(size_t size, size_t alignment)
     // Increment pool position by our max possible needed size
     const size_t pos = pool_pos_.fetch_add (max_size, std::memory_order_relaxed);
 
-    if (pos + max_size > INFS_SDRAM_POOL_SIZE) {
+    if (pos + max_size > SDRAM_POOL_SIZE) {
         asm ("bkpt 255");
         return nullptr;
     }

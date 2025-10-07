@@ -1,6 +1,6 @@
 #pragma once
-#ifndef INFS_KARPLUSSTRING_H
-#define INFS_KARPLUSSTRING_H
+#ifndef KARPLUSSTRING_H
+#define KARPLUSSTRING_H
 
 #include <stdint.h>
 #include <daisysp.h>

@@ -1,6 +1,6 @@
 #pragma once
-#ifndef INFS_SMOOTHED_VALUE_H
-#define INFS_SMOOTHED_VALUE_H
+#ifndef SMOOTHED_VALUE_H
+#define SMOOTHED_VALUE_H
 
 #include <daisysp.h>
 #include "DSPUtils.h"
