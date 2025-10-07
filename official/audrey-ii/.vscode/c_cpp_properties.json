@@ -49,7 +49,7 @@
                 "STM32H750xx"
             ],
             "includePath": [
-                "${workspaceFolder}/src/**",
+                "${workspaceFolder}/Source/**",
                 "${workspaceFolder}/lib",
                 "${workspaceFolder}/lib/libDaisy/src",
                 "${workspaceFolder}/lib/libDaisy/src/sys",
@@ -65,7 +65,8 @@
                 "${workspaceFolder}/lib/libDaisy/Middlewares/ST/STM32_USB_Host_Library/Core/Inc",
                 "${workspaceFolder}/lib/libDaisy/Middlewares/Third_Party/FatFs/src",
                 "${workspaceFolder}/lib/DaisySP/Source/**",
-                "${workspaceFolder}/lib/DaisySP/DaisySP-LGPL/Source/**"
+                "${workspaceFolder}/lib/DaisySP/DaisySP-LGPL/Source/**",
+                "${workspaceFolder}/Source"
             ],
             "name": "macOS"
         }
