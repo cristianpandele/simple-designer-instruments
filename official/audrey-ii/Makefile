@@ -1,5 +1,5 @@
 # Project Name
-TARGET = FeedbackSynth
+TARGET = MajmaaSynth
 
 LIBDAISY_DIR = lib/libDaisy
 DAISYSP_DIR = lib/DaisySP
@@ -15,10 +15,10 @@ C_SOURCES = \
 	${CMSIS_DSP_SRC_DIR}/ControllerFunctions/arm_sin_cos_f32.c
 
 CPP_SOURCES = \
-	FeedbackSynth_main.cpp \
+	Majmaa_main.cpp \
 	Source/BiquadFilters.cpp \
-	Source/FeedbackSynthControls.cpp \
-	Source/FeedbackSynthEngine.cpp \
+	Source/MajmaaControls.cpp \
+	Source/MajmaaEngine.cpp \
 	Source/KarplusString.cpp \
 	Source/memory/sdram_alloc.cpp
 

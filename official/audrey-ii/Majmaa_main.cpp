@@ -1,6 +1,6 @@
 #include <daisy_seed.h>
-#include "FeedbackSynthEngine.h"
-#include "FeedbackSynthControls.h"
+#include "MajmaaEngine.h"
+#include "MajmaaControls.h"
 
 using namespace majmaa;
 using namespace daisy;
@@ -10,8 +10,8 @@ static const auto kSampleRate = SaiHandle::Config::SampleRate::SAI_48KHZ;
 static const size_t kBlockSize = 4;
 
 static DaisySeed hw;
-static FeedbackSynth::Engine engine;
-static FeedbackSynth::Controls controls;
+static MajmaaSynth::Engine engine;
+static MajmaaSynth::Controls controls;
 static Limiter limiter[2];
 
 void AudioCallback(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, size_t size)

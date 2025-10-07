@@ -1,8 +1,8 @@
-#include "FeedbackSynthControls.h"
+#include "MajmaaControls.h"
 #include <functional>
 
 using namespace majmaa;
-using namespace majmaa::FeedbackSynth;
+using namespace majmaa::MajmaaSynth;
 using namespace daisy;
 
 ////////////// SIMPLE X DAISY PINOUT CHEATSHEET ///////////////

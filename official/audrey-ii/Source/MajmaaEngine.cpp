@@ -1,9 +1,9 @@
-#include "FeedbackSynthEngine.h"
+#include "MajmaaEngine.h"
 #include "DSPUtils.h"
 #include "memory/sdram_alloc.h"
 
 using namespace majmaa;
-using namespace majmaa::FeedbackSynth;
+using namespace majmaa::MajmaaSynth;
 using namespace daisysp;
 
 void Engine::Init(const float sample_rate) {

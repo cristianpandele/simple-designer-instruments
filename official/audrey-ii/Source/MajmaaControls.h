@@ -1,14 +1,14 @@
 #pragma once
-#ifndef INFS_FEEDBACKSYNTHCONTROLS_H
-#define INFS_FEEDBACKSYNTHCONTROLS_H
+#ifndef INFS_MajmaaCONTROLS_H
+#define INFS_MajmaaCONTROLS_H
 
 #include <daisy.h>
 #include <daisy_seed.h>
-#include "FeedbackSynthEngine.h"
+#include "MajmaaEngine.h"
 #include "ParameterRegistry.h"
 
 namespace majmaa {
-namespace FeedbackSynth {
+namespace MajmaaSynth {
 
 class Controls {
 

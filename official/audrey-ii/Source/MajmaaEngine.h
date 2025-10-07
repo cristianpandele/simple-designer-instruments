@@ -13,7 +13,7 @@
 #endif
 
 namespace majmaa {
-namespace FeedbackSynth {
+namespace MajmaaSynth {
 
 class Engine {
 
