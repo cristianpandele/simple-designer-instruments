@@ -40,6 +40,20 @@ static constexpr Pin kI2CSclPin                  = seed::D11;
 void Controls::Init(DaisySeed &hw, Engine &engine) {
     params_.Init(hw.AudioSampleRate() / hw.AudioBlockSize());
 
+    // --- MPR121 (I2C) ---
+    Mpr121I2C::Config mpr_cfg;
+    const uint8_t mprAddr[kNumMprInstances] = {0x5A, 0x5C, 0x5B};
+    mpr_cfg.transport_config.periph = I2CHandle::Config::Peripheral::I2C_1;
+    mpr_cfg.transport_config.mode = I2CHandle::Config::Mode::I2C_MASTER;
+    mpr_cfg.transport_config.scl = kI2CSclPin;
+    mpr_cfg.transport_config.sda = kI2CSdaPin;
+    mpr_cfg.transport_config.speed = I2CHandle::Config::Speed::I2C_400KHZ;
+    for (size_t i = 0; i < kNumMprInstances; i++)
+    {
+        mpr_cfg.transport_config.dev_addr = mprAddr[i];
+        mpr121_[i].Init(mpr_cfg);
+    }
+
     initADCs(hw);
     registerParams(engine);
 }

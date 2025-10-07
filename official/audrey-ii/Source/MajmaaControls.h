@@ -27,7 +27,8 @@ public:
 
 private:
 
-    static const size_t kNumAdcChannels = 4;
+    static const size_t kNumAdcChannels  = 4;
+    static const size_t kNumMprInstances = 3;
 
     /// Identifies a parameter of the synth engine
     /// The order here is the same order as the ADC pin configs in the cpp file
@@ -41,6 +42,8 @@ private:
     using Parameters = ParameterRegistry<Parameter>;
 
     Parameters params_;
+
+    daisy::Mpr121I2C mpr121_[kNumMprInstances];
 
     void initADCs(daisy::DaisySeed &hw);
     void registerParams(Engine &engine);
