@@ -34,6 +34,8 @@ static constexpr Pin kAccentKnobAdcPin           = seed::A0;
 static constexpr Pin kBrightnessKnobAdcPin       = seed::A1;
 static constexpr Pin kDampingKnobAdcPin          = seed::A2;
 static constexpr Pin kStructureKnobAdcPin        = seed::A3;
+static constexpr Pin kReverbFbKnobAdcPin         = seed::A4;
+static constexpr Pin kReverbMixKnobAdcPin        = seed::A5;
 static constexpr Pin kI2CSdaPin                  = seed::D12;
 static constexpr Pin kI2CSclPin                  = seed::D11;
 
@@ -93,6 +95,8 @@ void Controls::initADCs(DaisySeed &hw) {
     config[1].InitSingle(kBrightnessKnobAdcPin);
     config[2].InitSingle(kDampingKnobAdcPin);
     config[3].InitSingle(kStructureKnobAdcPin);
+    config[4].InitSingle(kReverbFbKnobAdcPin);
+    config[5].InitSingle(kReverbMixKnobAdcPin);
 
     hw.adc.Init(config, kNumAdcChannels);
     hw.adc.Start();

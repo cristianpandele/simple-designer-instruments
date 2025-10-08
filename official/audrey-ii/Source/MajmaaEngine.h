@@ -18,6 +18,15 @@ namespace MajmaaSynth {
 class Engine {
 
     public:
+        struct Parameters {
+            float accent       = 0.0f;  // 0.0 - 1.0
+            float brightness   = 0.5f;  // 0.0 - 1.0
+            float damping      = 0.5f;  // 0.0 - 1.0
+            float structure    = 0.5f;  // 0.0 - 1.0
+            float reverbFb     = 0.0f;  // 0.0 - 1.0
+            float reverbMix    = 0.0f;  // 0.0 - 1.0
+        };
+
         Engine() = default;
         ~Engine() = default;
 
@@ -25,11 +34,7 @@ class Engine {
 
         void SetStringPitch(const float nn);
 
-        void SetAccent(const float accent);
-
-        void SetBrightness(const float brightness);
-        void SetDamping(const float damping);
-        void SetStructure(const float structure);
+        void SetParameters(const Parameters& params);
 
         void Process(float &outL, float &outR);
 
@@ -49,6 +54,8 @@ class Engine {
         float fb_delay_samp_ = 1000.f;
         float fb_delay_samp_target_ = 64.f;
 
+        Parameters params_;
+
         majmaa::KarplusString strings_[2];
         daisysp::WhiteNoise noise_;
         daisysp::DelayLine<float, kMaxFeedbackDelaySamp> fb_delayline_[2];
@@ -62,6 +69,13 @@ class Engine {
 
         using EchoDelayPtr = std::unique_ptr<EchoDelay<kMaxEchoDelaySamp>>;
         EchoDelayPtr echo_delay_[2];
+
+        void SetAccent(const float accent);
+        void SetBrightness(const float brightness);
+        void SetDamping(const float damping);
+        void SetStructure(const float structure);
+        void SetReverbFeedback(const float reverbFb);
+        void SetReverbMix(const float reverbMix);
 
         Engine(const Engine &other) = delete;
         Engine(Engine &&other) = delete;

@@ -1,6 +1,7 @@
 #include "Majmaa_main.h"
 
 using namespace majmaa;
+using namespace MajmaaSynth;
 using namespace daisy;
 using namespace daisysp;
 
@@ -36,23 +37,28 @@ int main(void)
     while(1) {}
 }
 
-void handleAnalogControls(MajmaaSynth::Controls& controls, MajmaaSynth::Engine& engine)
+void handleAnalogControls(Controls& controls, Engine& engine)
 {
     // Get the current values of all analog controls
     controls.ProcessAnalogControls();
     // Smooth Values
-    accentKnobVal     = controls.GetAnalogControlValue(MajmaaSynth::Controls::AnalogControlId::Accent);
-    brightnessKnobVal = controls.GetAnalogControlValue(MajmaaSynth::Controls::AnalogControlId::Brightness);
-    dampingKnobVal    = controls.GetAnalogControlValue(MajmaaSynth::Controls::AnalogControlId::Damping);
-    structureKnobVal  = controls.GetAnalogControlValue(MajmaaSynth::Controls::AnalogControlId::Structure);
+    accentKnobVal     = controls.GetAnalogControlValue(Controls::AnalogControlId::Accent);
+    brightnessKnobVal = controls.GetAnalogControlValue(Controls::AnalogControlId::Brightness);
+    dampingKnobVal    = controls.GetAnalogControlValue(Controls::AnalogControlId::Damping);
+    structureKnobVal  = controls.GetAnalogControlValue(Controls::AnalogControlId::Structure);
+    reverbFbKnobVal   = controls.GetAnalogControlValue(Controls::AnalogControlId::ReverbFb);
+    reverbMixKnobVal  = controls.GetAnalogControlValue(Controls::AnalogControlId::ReverbMix);
 
     // Only update the engine if any of the values have changed (and thus values are smoothing)
     if (accentKnobVal.isSmoothing() || brightnessKnobVal.isSmoothing() || dampingKnobVal.isSmoothing() ||
-        structureKnobVal.isSmoothing())
+        structureKnobVal.isSmoothing() || reverbFbKnobVal.isSmoothing() || reverbMixKnobVal.isSmoothing())
     {
-        engine.SetAccent(accentKnobVal.getSmoothVal());
-        engine.SetBrightness(brightnessKnobVal.getSmoothVal());
-        engine.SetDamping(dampingKnobVal.getSmoothVal());
-        engine.SetStructure(structureKnobVal.getSmoothVal());
+        Engine::Parameters params = {.accent = accentKnobVal.getSmoothVal(),
+                                     .brightness = brightnessKnobVal.getSmoothVal(),
+                                     .damping = dampingKnobVal.getSmoothVal(),
+                                     .structure = structureKnobVal.getSmoothVal(),
+                                     .reverbFb = reverbFbKnobVal.getSmoothVal(),
+                                     .reverbMix = reverbMixKnobVal.getSmoothVal()};
+        engine.SetParameters(params);
     }
 }

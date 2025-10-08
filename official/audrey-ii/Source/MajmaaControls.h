@@ -19,7 +19,9 @@ public:
         Accent = 0,
         Brightness, // 1
         Damping,    // 2
-        Structure   // 3
+        Structure,  // 3
+        ReverbFb,   // 4
+        ReverbMix   // 5
     };
 
     Controls() = default;
@@ -36,7 +38,7 @@ public:
     float GetAnalogControlValue(AnalogControlId id);
 
 private:
-    static const size_t kNumAdcChannels  = 4;
+    static const size_t kNumAdcChannels  = 6;
     static const size_t kNumMprInstances = 3;
 
     daisy::AnalogControl controls_[kNumAdcChannels];

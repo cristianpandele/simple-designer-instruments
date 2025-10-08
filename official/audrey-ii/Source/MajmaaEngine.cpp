@@ -56,20 +56,39 @@ void Engine::SetStringPitch(const float nn) {
   strings_[1].SetFreq(freq);
 }
 
+void Engine::SetParameters(const Parameters &params) {
+  SetAccent(params.accent);
+  SetBrightness(params.brightness);
+  SetDamping(params.damping);
+  SetStructure(params.structure);
+  SetReverbFeedback(params.reverbFb);
+  SetReverbMix(params.reverbMix);
+}
+
 void Engine::SetAccent(const float accent) {
-  /**/
+  params_.accent = unitclamp(accent);
 }
 
 void Engine::SetBrightness(const float brightness) {
-  /**/
+  params_.brightness = unitclamp(brightness);
 }
 
 void Engine::SetDamping(const float damping) {
-  /**/
+  params_.damping = unitclamp(damping);
 }
 
 void Engine::SetStructure(const float structure) {
-  /**/
+  params_.structure = unitclamp(structure);
+}
+
+void Engine::SetReverbFeedback(const float reverbFb)
+{
+  params_.reverbFb = unitclamp(reverbFb);
+}
+
+void Engine::SetReverbMix(const float reverbMix)
+{
+  params_.reverbMix = unitclamp(reverbMix);
 }
 
 void Engine::Process(float &outL, float &outR) {

@@ -26,6 +26,8 @@ static SmoothValue accentKnobVal = SmoothValue(0.0f, 75.0f, kSamplePeriodMs * kB
 static SmoothValue brightnessKnobVal = SmoothValue(0.5f, 75.0f, kSamplePeriodMs * kBlockSize);
 static SmoothValue dampingKnobVal = SmoothValue(0.5f, 75.0f, kSamplePeriodMs * kBlockSize);
 static SmoothValue structureKnobVal = SmoothValue(0.5f, 75.0f, kSamplePeriodMs * kBlockSize);
+static SmoothValue reverbFbKnobVal = SmoothValue(0.0f, 75.0f, kSamplePeriodMs * kBlockSize);
+static SmoothValue reverbMixKnobVal = SmoothValue(0.0f, 75.0f, kSamplePeriodMs * kBlockSize);
 
 // Get the current values of all analog controls, smooth values and update internal engine state
 void handleAnalogControls(MajmaaSynth::Controls &controls, MajmaaSynth::Engine &engine);
