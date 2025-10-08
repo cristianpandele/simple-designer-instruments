@@ -40,7 +40,6 @@ static constexpr Pin kI2CSclPin                  = seed::D11;
 void Controls::Init(DaisySeed &hw, Engine &engine) {
 
     const float kProcessRate = hw.AudioSampleRate() / hw.AudioBlockSize();
-    params_.Init(kProcessRate);
 
     // --- MPR121 (I2C) ---
     Mpr121I2C::Config mpr_cfg;
@@ -64,14 +63,27 @@ void Controls::Init(DaisySeed &hw, Engine &engine) {
     }
 
     initADCs(hw);
-    registerParams(engine);
 }
 
-void Controls::Update(DaisySeed &hw) {
-    params_.UpdateNormalized(Parameter::Accent,             hw.adc.GetFloat(static_cast<uint8_t>(Parameter::Accent)));
-    params_.UpdateNormalized(Parameter::Brightness,         hw.adc.GetFloat(static_cast<uint8_t>(Parameter::Brightness)));
-    params_.UpdateNormalized(Parameter::Damping,            hw.adc.GetFloat(static_cast<uint8_t>(Parameter::Damping)));
-    params_.UpdateNormalized(Parameter::Structure,          hw.adc.GetFloat(static_cast<uint8_t>(Parameter::Structure)));
+// Unipolar 0.0 - 1.0
+float Controls::GetAnalogControlValue(AnalogControlId id)
+{
+    if (static_cast<uint8_t>(id) >= kNumAdcChannels)
+    {
+        return 0.0f;
+    }
+
+    // Leave a margin at the low and high ends of the pots
+    float val = map(controls_[id].Value(), 0.05f, 0.93f, 0.0f, 1.0f);
+    return unitclamp(val);
+}
+
+void Controls::ProcessAnalogControls()
+{
+    for (auto &control : controls_)
+    {
+        control.Process();
+    }
 }
 
 void Controls::initADCs(DaisySeed &hw) {
@@ -84,23 +96,4 @@ void Controls::initADCs(DaisySeed &hw) {
 
     hw.adc.Init(config, kNumAdcChannels);
     hw.adc.Start();
-}
-
-void Controls::registerParams(Engine &engine) {
-    using namespace std::placeholders;
-    // Accent
-    params_.Register(Parameter::Accent, 0.0f, 0.0f, 1.0f,
-        std::bind(&Engine::SetAccent, &engine, _1));
-
-    // Brightness
-    params_.Register(Parameter::Brightness, 0.0f, 0.0f, 1.0f,
-        std::bind(&Engine::SetBrightness, &engine, _1));
-
-        // Damping
-    params_.Register(Parameter::Damping, 0.2f, 0.2f, 1.0f,
-        std::bind(&Engine::SetDamping, &engine, _1));
-
-    // Structure
-    params_.Register(Parameter::Structure, 0.5f, 0.05f, 5.0f,
-        std::bind(&Engine::SetStructure, &engine, _1));
 }

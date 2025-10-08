@@ -1,23 +1,14 @@
-#include <daisy_seed.h>
-#include "MajmaaEngine.h"
-#include "MajmaaControls.h"
+#include "Majmaa_main.h"
 
 using namespace majmaa;
 using namespace daisy;
 using namespace daisysp;
 
-static const auto kSampleRate = SaiHandle::Config::SampleRate::SAI_48KHZ;
-static const size_t kBlockSize = 4;
-
-static DaisySeed hw;
-static MajmaaSynth::Engine engine;
-static MajmaaSynth::Controls controls;
-static Limiter limiter[2];
-
 void AudioCallback(AudioHandle::InputBuffer /* in */, AudioHandle::OutputBuffer out, size_t size)
 {
-    controls.Update(hw);
-    controls.Process();
+    // Get, smooth and set the current values of all analog controls
+    handleAnalogControls(controls, engine);
+
     for (size_t i=0; i<size; i++) {
         engine.Process(OUT_L[i], OUT_R[i]);
     }
@@ -43,4 +34,25 @@ int main(void)
     hw.StartAudio(AudioCallback);
 
     while(1) {}
+}
+
+void handleAnalogControls(MajmaaSynth::Controls& controls, MajmaaSynth::Engine& engine)
+{
+    // Get the current values of all analog controls
+    controls.ProcessAnalogControls();
+    // Smooth Values
+    accentKnobVal     = controls.GetAnalogControlValue(MajmaaSynth::Controls::AnalogControlId::Accent);
+    brightnessKnobVal = controls.GetAnalogControlValue(MajmaaSynth::Controls::AnalogControlId::Brightness);
+    dampingKnobVal    = controls.GetAnalogControlValue(MajmaaSynth::Controls::AnalogControlId::Damping);
+    structureKnobVal  = controls.GetAnalogControlValue(MajmaaSynth::Controls::AnalogControlId::Structure);
+
+    // Only update the engine if any of the values have changed (and thus values are smoothing)
+    if (accentKnobVal.isSmoothing() || brightnessKnobVal.isSmoothing() || dampingKnobVal.isSmoothing() ||
+        structureKnobVal.isSmoothing())
+    {
+        engine.SetAccent(accentKnobVal.getSmoothVal());
+        engine.SetBrightness(brightnessKnobVal.getSmoothVal());
+        engine.SetDamping(dampingKnobVal.getSmoothVal());
+        engine.SetStructure(structureKnobVal.getSmoothVal());
+    }
 }

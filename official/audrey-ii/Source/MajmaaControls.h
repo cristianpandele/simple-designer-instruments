@@ -5,7 +5,6 @@
 #include <daisy.h>
 #include <daisy_seed.h>
 #include "MajmaaEngine.h"
-#include "ParameterRegistry.h"
 
 namespace majmaa {
 namespace MajmaaSynth {
@@ -13,6 +12,15 @@ namespace MajmaaSynth {
 class Controls {
 
 public:
+    // Identifies a parameter of the synth engine
+    /// The order here is the same order as the ADC pin configs in the cpp file
+    enum AnalogControlId
+    {
+        Accent = 0,
+        Brightness, // 1
+        Damping,    // 2
+        Structure   // 3
+    };
 
     Controls() = default;
     ~Controls() = default;
@@ -21,34 +29,21 @@ public:
 
     void Update(daisy::DaisySeed &hw);
 
-    void Process() {
-        params_.Process();
-    }
+    // Read and smooth all analog controls
+    void ProcessAnalogControls();
+
+    // Get the current value of an analog control in the range 0.0 - 1.0
+    float GetAnalogControlValue(AnalogControlId id);
 
 private:
-
     static const size_t kNumAdcChannels  = 4;
     static const size_t kNumMprInstances = 3;
-
-    /// Identifies a parameter of the synth engine
-    /// The order here is the same order as the ADC pin configs in the cpp file
-    enum class Parameter : uint8_t {
-        Accent              = 0,
-        Brightness,         // 1
-        Damping,            // 2
-        Structure           // 3
-    };
-
-    using Parameters = ParameterRegistry<Parameter>;
-
-    Parameters params_;
 
     daisy::AnalogControl controls_[kNumAdcChannels];
 
     daisy::Mpr121I2C mpr121_[kNumMprInstances];
 
     void initADCs(daisy::DaisySeed &hw);
-    void registerParams(Engine &engine);
 };
 
 }

@@ -4,9 +4,14 @@
 
 #include <cmath>
 #include <Utility/dsp.h>
+
 #ifdef __arm__
 #include <arm_math.h>
 #endif
+
+#define MIN(in, mn) (in < mn ? in : mn)
+#define MAX(in, mx) (in > mx ? in : mx)
+#define CLAMP(in, mn, mx) MIN(MAX(in, mn), mx)
 
 namespace majmaa {
 
@@ -16,6 +21,17 @@ inline float dbfs2lin(float dbfs) {
 
 inline float lin2dbfs(float lin) {
     return daisysp::fastlog10f(lin) * 20.0f;
+}
+
+constexpr float unitclamp(float in)
+{
+    return CLAMP(in, 0.0f, 1.0f);
+}
+
+template <typename T>
+inline T map(const T &x, const T &in_min, const T &in_max, const T &out_min, const T &out_max)
+{
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
 // Coefficient for one pole smoothing filter based on Tau time constant for `time_s`
