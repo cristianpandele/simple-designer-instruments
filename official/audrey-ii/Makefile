@@ -9,6 +9,11 @@ CMSIS_DSP_SRC_DIR = ${LIBDAISY_DIR}/Drivers/CMSIS/DSP/Source
 
 C_DEFS = -DTARGET_DAISY
 
+# Config Options
+ifeq ($(DEBUG), 1)
+C_DEFS += -DLOG_ENABLED=1
+endif
+
 C_INCLUDES = \
 	-ISource/
 

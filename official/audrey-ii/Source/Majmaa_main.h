@@ -14,6 +14,8 @@ using namespace MajmaaSynth;
 using namespace daisy;
 using namespace daisysp;
 
+#define PRINT_CPU_LOAD
+
 static const auto kSampleRate = SaiHandle::Config::SampleRate::SAI_48KHZ;
 static const auto kSamplePeriodMs = 1000.0f / 48000.0f;
 static const size_t kBlockSize = 48;
@@ -40,6 +42,10 @@ static std::bitset<16> padTouchStatesPrev[controls.kNumMprInstances];
 
 daisy::StopwatchTimer log_timer;
 daisy::StopwatchTimer touch_timer;
+
+#if DEBUG
+void logDebugInfo();
+#endif
 
 // Get the current values of all analog controls, smooth values and update internal engine state
 void handleAnalogControls(Controls &controls, Engine &engine);

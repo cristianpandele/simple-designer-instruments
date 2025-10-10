@@ -4,8 +4,15 @@ using namespace majmaa;
 using namespace daisy;
 using namespace daisysp;
 
+#if DEBUG
+CpuLoadMeter loadMeter;
+#endif
+
 void AudioCallback(AudioHandle::InputBuffer /* in */, AudioHandle::OutputBuffer out, size_t size)
 {
+#if DEBUG
+    loadMeter.OnBlockStart();
+#endif
     // Get, smooth and set the current values of all analog controls
     handleAnalogControls(controls, engine);
 
@@ -14,9 +21,12 @@ void AudioCallback(AudioHandle::InputBuffer /* in */, AudioHandle::OutputBuffer 
     }
     limiter[0].ProcessBlock(OUT_L, size, 0.7f);
     limiter[1].ProcessBlock(OUT_R, size, 0.7f);
+#if DEBUG
+    loadMeter.OnBlockEnd();
+#endif
 }
 
-int main(void)
+void init()
 {
     hw.Init();
 
@@ -78,5 +88,29 @@ void handleDigitalControls(Controls &controls)
         // Update the previous touch states
         padTouchStatesPrev[instance] = padTouchStates[instance];
     }
+}
+
+#if DEBUG
+void logDebugInfo()
+{
+    Log::PrintLine("Accent          : " FLT_FMT(5), FLT_VAR(5, accentKnobVal.getSmoothVal()));
+    Log::PrintLine("Damping         : " FLT_FMT(5), FLT_VAR(5, dampingKnobVal.getSmoothVal()));
+    Log::PrintLine("Brightness      : " FLT_FMT(5), FLT_VAR(5, brightnessKnobVal.getSmoothVal()));
+    Log::PrintLine("Structure       : " FLT_FMT(5), FLT_VAR(5, structureKnobVal.getSmoothVal()));
+    Log::PrintLine("Reverb Fb       : " FLT_FMT(5), FLT_VAR(5, reverbFbKnobVal.getSmoothVal()));
+    Log::PrintLine("Reverb Mix      : " FLT_FMT(5), FLT_VAR(5, reverbMixKnobVal.getSmoothVal()));
+    // Log::PrintLine("String Freq   : " FLT_FMT(5), FLT_VAR(5, engine.getStringFreq()));
+
+#ifdef PRINT_CPU_LOAD
+    // get the current load (smoothed value and peak values)
+    const float avgLoad = loadMeter.GetAvgCpuLoad();
+    const float maxLoad = loadMeter.GetMaxCpuLoad();
+    const float minLoad = loadMeter.GetMinCpuLoad();
+    // print it to the serial connection (as percentages)
+    Log::PrintLine("Processing Load (%%):");
+    Log::PrintLine("Max: " FLT_FMT3, FLT_VAR3(maxLoad * 100.0f));
+    Log::PrintLine("Avg: " FLT_FMT3, FLT_VAR3(avgLoad * 100.0f));
+    Log::PrintLine("Min: " FLT_FMT3, FLT_VAR3(minLoad * 100.0f));
+#endif
 }
 #endif
