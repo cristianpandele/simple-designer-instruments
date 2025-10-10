@@ -36,27 +36,60 @@ void init()
     engine.Init(hw.AudioSampleRate());
     controls.Init(hw, engine);
 
-    for(auto& lim : limiter)
+    for (auto &lim : limiter)
     {
         lim.Init();
     }
 
     hw.StartAudio(AudioCallback);
 
-    while(1) {}
+#if DEBUG
+    Log::StartLog(false);
+    log_timer.Init();
+    touch_timer.Init();
+    loadMeter.Init(hw.AudioSampleRate(), hw.AudioBlockSize());
+#endif
+}
+
+int main(void)
+{
+    // Initialize the hardware and the engine
+    init();
+
+    while(1)
+    {
+        // Debug logging
+        if (log_timer.HasPassedMs(kDebugLogPeriodMs))
+        {
+#if DEBUG
+            logDebugInfo();
+#endif
+            log_timer.Restart();
+        }
+
+        if (touch_timer.HasPassedMs(kTouchRegisterPeriodMs))
+        {
+            // Touch pad registration
+            handleDigitalControls(controls);
+            touch_timer.Restart();
+        }
+    }
 }
 
 void handleAnalogControls(Controls& controls, Engine& engine)
 {
-    // Get the current values of all analog controls
-    controls.ProcessAnalogControls();
+    // Lambda function: Leave a margin at the low and high ends of the pots
+    auto mapControlValue = [](float value) {
+        return unitclamp(map(value, 0.05f, 0.93f, 0.0f, 1.0f));
+    };
+
     // Smooth Values
-    accentKnobVal     = controls.GetAnalogControlValue(Controls::AnalogControlId::Accent);
-    brightnessKnobVal = controls.GetAnalogControlValue(Controls::AnalogControlId::Brightness);
-    dampingKnobVal    = controls.GetAnalogControlValue(Controls::AnalogControlId::Damping);
-    structureKnobVal  = controls.GetAnalogControlValue(Controls::AnalogControlId::Structure);
-    reverbFbKnobVal   = controls.GetAnalogControlValue(Controls::AnalogControlId::ReverbFb);
-    reverbMixKnobVal  = controls.GetAnalogControlValue(Controls::AnalogControlId::ReverbMix);
+    accentKnobVal     = mapControlValue(hw.adc.GetFloat(0));
+    brightnessKnobVal = mapControlValue(hw.adc.GetFloat(1));
+    dampingKnobVal    = mapControlValue(hw.adc.GetFloat(2));
+    structureKnobVal  = mapControlValue(hw.adc.GetFloat(3));
+    reverbFbKnobVal   = mapControlValue(hw.adc.GetFloat(4));
+    reverbMixKnobVal  = mapControlValue(hw.adc.GetFloat(5));
 
     // Only update the engine if any of the values have changed (and thus values are smoothing)
     if (accentKnobVal.isSmoothing() || brightnessKnobVal.isSmoothing() || dampingKnobVal.isSmoothing() ||
