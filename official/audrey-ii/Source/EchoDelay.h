@@ -4,7 +4,7 @@
 
 #include <daisysp.h>
 #include "BiquadFilters.h"
-#include "DSPUtils.h"
+#include "Utils.h"
 
 namespace majmaa {
 

@@ -1,7 +1,6 @@
 #include "Majmaa_main.h"
 
 using namespace majmaa;
-using namespace MajmaaSynth;
 using namespace daisy;
 using namespace daisysp;
 
@@ -62,3 +61,22 @@ void handleAnalogControls(Controls& controls, Engine& engine)
         engine.SetParameters(params);
     }
 }
+
+void handleDigitalControls(Controls &controls)
+{
+    for (size_t instance = 0; instance < Controls::kNumMprInstances; instance++)
+    {
+        padTouchStates[instance] = controls.GetMpr121TouchStates(instance);
+
+        for (size_t i = 0; i < 16; i++)
+        {
+            if (hasTouchStateChangedToPressed(padTouchStates[instance], padTouchStatesPrev[instance], i))
+            {
+                Log::PrintLine("Pad %d on instance %d pressed", i, instance);
+            }
+        }
+        // Update the previous touch states
+        padTouchStatesPrev[instance] = padTouchStates[instance];
+    }
+}
+#endif

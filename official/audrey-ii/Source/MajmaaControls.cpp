@@ -47,45 +47,33 @@ void Controls::Init(DaisySeed &hw, Engine &engine) {
     Mpr121I2C::Config mpr_cfg;
     const uint8_t mprAddr[kNumMprInstances] = {0x5A, 0x5C, 0x5B};
     mpr_cfg.transport_config.periph = I2CHandle::Config::Peripheral::I2C_1;
-    mpr_cfg.transport_config.mode = I2CHandle::Config::Mode::I2C_MASTER;
     mpr_cfg.transport_config.scl = kI2CSclPin;
     mpr_cfg.transport_config.sda = kI2CSdaPin;
     mpr_cfg.transport_config.speed = I2CHandle::Config::Speed::I2C_400KHZ;
     for (size_t i = 0; i < kNumMprInstances; i++)
     {
+        if (i == 0)
+        {
+            mpr_cfg.transport_config.mode = I2CHandle::Config::Mode::I2C_MASTER;
+        }
+        else
+        {
+            mpr_cfg.transport_config.mode = I2CHandle::Config::Mode::I2C_SLAVE;
+        }
         mpr_cfg.transport_config.dev_addr = mprAddr[i];
-        mpr121_[i].Init(mpr_cfg);
-    }
-
-    // --- Analog Controls ---
-    constexpr float kPotSmoothTime = 0.02f;
-
-    for (size_t i = 0; i < kNumAdcChannels; i++) {
-        controls_[i].Init(hw.adc.GetPtr(i), kProcessRate, false, false, kPotSmoothTime);
+        if (mpr121_[i].Init(mpr_cfg) != Mpr121I2C::Result::OK)
+        {
+            while (1)
+                ;
+        }
     }
 
     initADCs(hw);
 }
 
-// Unipolar 0.0 - 1.0
-float Controls::GetAnalogControlValue(AnalogControlId id)
+uint16_t Controls::GetMpr121TouchStates(uint8_t instance)
 {
-    if (static_cast<uint8_t>(id) >= kNumAdcChannels)
-    {
-        return 0.0f;
-    }
-
-    // Leave a margin at the low and high ends of the pots
-    float val = map(controls_[id].Value(), 0.05f, 0.93f, 0.0f, 1.0f);
-    return unitclamp(val);
-}
-
-void Controls::ProcessAnalogControls()
-{
-    for (auto &control : controls_)
-    {
-        control.Process();
-    }
+    return mpr121_[instance].Touched();
 }
 
 void Controls::initADCs(DaisySeed &hw) {

@@ -1,6 +1,6 @@
 #include "BiquadFilters.h"
 #include <cmath>
-#include "DSPUtils.h"
+#include "Utils.h"
 
 using namespace majmaa;
 

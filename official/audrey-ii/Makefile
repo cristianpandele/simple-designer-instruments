@@ -1,6 +1,8 @@
 # Project Name
 TARGET = MajmaaSynth
 
+CPP_STANDARD = -std=c++17
+
 LIBDAISY_DIR = lib/libDaisy
 DAISYSP_DIR = lib/DaisySP
 CMSIS_DSP_SRC_DIR = ${LIBDAISY_DIR}/Drivers/CMSIS/DSP/Source

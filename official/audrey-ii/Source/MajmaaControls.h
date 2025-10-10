@@ -12,6 +12,7 @@ namespace MajmaaSynth {
 class Controls {
 
 public:
+    static const size_t kNumMprInstances = 3;
     // Identifies a parameter of the synth engine
     /// The order here is the same order as the ADC pin configs in the cpp file
     enum AnalogControlId
@@ -31,15 +32,10 @@ public:
 
     void Update(daisy::DaisySeed &hw);
 
-    // Read and smooth all analog controls
-    void ProcessAnalogControls();
-
-    // Get the current value of an analog control in the range 0.0 - 1.0
-    float GetAnalogControlValue(AnalogControlId id);
+    uint16_t GetMpr121TouchStates(uint8_t instance);
 
 private:
     static const size_t kNumAdcChannels  = 6;
-    static const size_t kNumMprInstances = 3;
 
     daisy::AnalogControl controls_[kNumAdcChannels];
 

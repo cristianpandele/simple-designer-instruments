@@ -1,5 +1,5 @@
 #include "MajmaaEngine.h"
-#include "DSPUtils.h"
+#include "Utils.h"
 #include "memory/sdram_alloc.h"
 
 using namespace majmaa;

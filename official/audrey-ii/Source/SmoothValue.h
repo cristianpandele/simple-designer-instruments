@@ -3,7 +3,7 @@
 #define SMOOTHED_VALUE_H
 
 #include <daisysp.h>
-#include "DSPUtils.h"
+#include "Utils.h"
 
 namespace majmaa {
 
