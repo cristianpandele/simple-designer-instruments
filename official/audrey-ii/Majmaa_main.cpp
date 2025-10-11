@@ -115,7 +115,9 @@ void handleDigitalControls(Controls &controls)
         {
             if (hasTouchStateChangedToPressed(padTouchStates[instance], padTouchStatesPrev[instance], i))
             {
+#if DEBUG
                 Log::PrintLine("Pad %d on instance %d pressed", i, instance);
+#endif
             }
         }
         // Update the previous touch states
