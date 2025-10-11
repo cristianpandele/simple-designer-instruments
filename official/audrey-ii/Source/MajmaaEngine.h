@@ -1,16 +1,10 @@
 #pragma once
-#ifndef IFS_FEEDBACK_SYNTH_ENGINE_H
-#define IFS_FEEDBACK_SYNTH_ENGINE_H
+#ifndef MAJMAA_ENGINE_H
+#define MAJMAA_ENGINE_H
 
-#include <memory>
+#include <array>
 #include <daisysp.h>
-#include "BiquadFilters.h"
-#include "EchoDelay.h"
-#include "KarplusString.h"
-
-#ifdef __arm__
-#include <dev/sdram.h>
-#endif
+#include "vox.h"
 
 namespace majmaa {
 namespace MajmaaSynth {
@@ -27,6 +21,8 @@ class Engine {
             float reverbMix    = 0.0f;  // 0.0 - 1.0
         };
 
+        static constexpr size_t kNumberVoices = 3; // Number of polyphonic voices
+
         Engine() = default;
         ~Engine() = default;
 
@@ -39,11 +35,6 @@ class Engine {
         void Process(float &outL, float &outR);
 
     private:
-        // long enough for 250ms at 48kHz
-        static constexpr size_t kMaxFeedbackDelaySamp = 12000;
-        // long enough for 5s at 48kHz
-        static constexpr size_t kMaxEchoDelaySamp = 48000 * 5;
-
         float sample_rate_;
         float fb_gain_ = 0.0f;
         float echo_send_ = 0.0f;
@@ -56,19 +47,8 @@ class Engine {
 
         Parameters params_;
 
-        majmaa::KarplusString strings_[2];
-        daisysp::WhiteNoise noise_;
-        daisysp::DelayLine<float, kMaxFeedbackDelaySamp> fb_delayline_[2];
-        daisysp::Overdrive overdrive_[2];
-
-        LPF12 fb_lpf_;
-        HPF12 fb_hpf_;
-
-        using VerbPtr = std::unique_ptr<daisysp::ReverbSc>;
-        VerbPtr verb_;
-
-        using EchoDelayPtr = std::unique_ptr<EchoDelay<kMaxEchoDelaySamp>>;
-        EchoDelayPtr echo_delay_[2];
+        // String synth voice
+        std::array<Vox, kNumberVoices> strings_;
 
         void SetAccent(const float accent);
         void SetBrightness(const float brightness);

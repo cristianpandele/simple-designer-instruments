@@ -23,11 +23,8 @@ C_SOURCES = \
 
 CPP_SOURCES = \
 	Majmaa_main.cpp \
-	Source/BiquadFilters.cpp \
 	Source/MajmaaControls.cpp \
-	Source/MajmaaEngine.cpp \
-	Source/KarplusString.cpp \
-	Source/memory/sdram_alloc.cpp
+	Source/MajmaaEngine.cpp
 
 # Core location, and generic Makefile.
 SYSTEM_FILES_DIR = $(LIBDAISY_DIR)/core
