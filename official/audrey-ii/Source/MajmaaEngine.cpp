@@ -7,85 +7,73 @@ using namespace daisysp;
 
 static DSY_SDRAM_BSS daisysp::ReverbSc reverb_;
 
-void Engine::Init(const float sample_rate) {
-  sample_rate_ = sample_rate;
+void Engine::init(const float sampleRate) {
+  sampleRate_ = sampleRate;
 
-  for (unsigned int i = 0; i < 2; i++) {
-
-    strings_[i].Init(sample_rate);
-    strings_[i].SetBrightness(0.98f);
-    // strings_[i].SetFreq(mtof(40.0f));
-    strings_[i].SetDamping(0.4f);
+  // Initialize the voices
+  for (auto &s : strings_)
+  {
+    s.init(sampleRate_);
+    s.setBrightness(0.5f);
+    s.setStructure(0.5f);
+    s.setDamping(0.5f);
+    s.SetMult(1.0f);
   }
 
-  reverb_.Init(sample_rate);
+  reverb_.Init(sampleRate);
   reverb_.SetFeedback(0.85f);
   reverb_.SetLpFreq(12000.0f);
 }
 
-void Engine::SetStringPitch(const float nn) {
-  const auto freq = mtof(nn);
-  // strings_[0].SetFreq(freq);
-  // strings_[1].SetFreq(freq);
+void Engine::setParameters(const Parameters &params) {
+  setAccent(params.accent);
+  setBrightness(params.brightness);
+  setDamping(params.damping);
+  setStructure(params.structure);
+  setReverbFeedback(params.reverbFb);
+  setReverbMix(params.reverbMix);
 }
 
-void Engine::SetParameters(const Parameters &params) {
-  SetAccent(params.accent);
-  SetBrightness(params.brightness);
-  SetDamping(params.damping);
-  SetStructure(params.structure);
-  SetReverbFeedback(params.reverbFb);
-  SetReverbMix(params.reverbMix);
-}
-
-void Engine::SetAccent(const float accent) {
+void Engine::setAccent(const float accent) {
   params_.accent = unitclamp(accent);
 }
 
-void Engine::SetBrightness(const float brightness) {
+void Engine::setBrightness(const float brightness) {
   params_.brightness = unitclamp(brightness);
 }
 
-void Engine::SetDamping(const float damping) {
+void Engine::setDamping(const float damping) {
   params_.damping = unitclamp(damping);
 }
 
-void Engine::SetStructure(const float structure) {
+void Engine::setStructure(const float structure) {
   params_.structure = unitclamp(structure);
 }
 
-void Engine::SetReverbFeedback(const float reverbFb)
+void Engine::setReverbFeedback(const float reverbFb)
 {
   params_.reverbFb = unitclamp(reverbFb);
 }
 
-void Engine::SetReverbMix(const float reverbMix)
+void Engine::setReverbMix(const float reverbMix)
 {
   params_.reverbMix = unitclamp(reverbMix);
 }
 
-void Engine::Process(float &outL, float &outR) {
-  // --- Process Samples ---
+void Engine::processAudioSample(float &outL, float &outR) {
+  // --- processAudioSample Samples ---
 
-  float sampL, sampR, echoL, echoR, verbL, verbR;
+  float sampL, sampR, verbL, verbR;
 
-  // Process through KS resonator
-  sampL = strings_[0].Process();
-  sampR = strings_[1].Process();
+  // processAudioSample through KS resonator
+  sampL = strings_[0].processAudioSample();
+  sampR = strings_[1].processAudioSample();
 
   // ---> Reverb
 
   reverb_.Process(sampL, sampR, &verbL, &verbR);
 
-  //       (sampL * (1.0f - verb_mix_)) + verbL * verb_mix_;
-  //       sampL - sampL * verb_mix + verbL * verb_mix_;
-  sampL -= (sampL - verbL) * verb_mix_;
-  sampR -= (sampR - verbR) * verb_mix_;
-
-  sampL = 0.5f * (sampL + echoL);
-  sampR = 0.5f * (sampR + echoR);
-
   // ---> Output
-  outL = sampL * output_level_;
-  outR = sampR * output_level_;
+  outL = lerp(sampL, verbL, reverbMix);
+  outR = lerp(sampR, verbR, reverbMix);
 }

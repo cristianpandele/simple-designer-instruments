@@ -39,7 +39,7 @@ static constexpr Pin kReverbMixKnobAdcPin        = seed::A5;
 static constexpr Pin kI2CSdaPin                  = seed::D12;
 static constexpr Pin kI2CSclPin                  = seed::D11;
 
-void Controls::Init(DaisySeed &hw, Engine &engine) {
+void Controls::init(DaisySeed &hw, Engine &engine) {
     // --- MPR121 (I2C) ---
     Mpr121I2C::Config mpr_cfg;
     const uint8_t mprAddr[kNumMprInstances] = {0x5A, 0x5C, 0x5B};

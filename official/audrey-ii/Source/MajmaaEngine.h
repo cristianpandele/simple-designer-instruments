@@ -26,36 +26,30 @@ class Engine {
         Engine() = default;
         ~Engine() = default;
 
-        void Init(const float sample_rate);
+        void init(const float sampleRate);
 
-        void SetStringPitch(const float nn);
+        void setParameters(const Parameters& params);
 
-        void SetParameters(const Parameters& params);
+        void triggerNote(const uint8_t instance, const uint8_t pad);
 
-        void Process(float &outL, float &outR);
+        void processAudioSample(float &outL, float &outR);
 
     private:
-        float sample_rate_;
-        float fb_gain_ = 0.0f;
-        float echo_send_ = 0.0f;
-        float verb_mix_ = 0.0f;
-        float output_level_ = 0.5f;
-
-        float fb_delay_smooth_coef_;
-        float fb_delay_samp_ = 1000.f;
-        float fb_delay_samp_target_ = 64.f;
+        float sampleRate_;
+        float reverbFb = 0.0f;
+        float reverbMix = 0.0f;
 
         Parameters params_;
 
         // String synth voice
         std::array<Vox, kNumberVoices> strings_;
 
-        void SetAccent(const float accent);
-        void SetBrightness(const float brightness);
-        void SetDamping(const float damping);
-        void SetStructure(const float structure);
-        void SetReverbFeedback(const float reverbFb);
-        void SetReverbMix(const float reverbMix);
+        void setAccent(const float accent);
+        void setBrightness(const float brightness);
+        void setDamping(const float damping);
+        void setStructure(const float structure);
+        void setReverbFeedback(const float reverbFb);
+        void setReverbMix(const float reverbMix);
 
         Engine(const Engine &other) = delete;
         Engine(Engine &&other) = delete;

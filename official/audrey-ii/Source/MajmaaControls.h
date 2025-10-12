@@ -28,7 +28,7 @@ public:
     Controls() = default;
     ~Controls() = default;
 
-    void Init(daisy::DaisySeed &hw, Engine &engine);
+    void init(daisy::DaisySeed &hw, Engine &engine);
 
     void Update(daisy::DaisySeed &hw);
 

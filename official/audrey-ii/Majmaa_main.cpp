@@ -17,7 +17,7 @@ void AudioCallback(AudioHandle::InputBuffer /* in */, AudioHandle::OutputBuffer 
     handleAnalogControls(controls, engine);
 
     for (size_t i=0; i<size; i++) {
-        engine.Process(OUT_L[i], OUT_R[i]);
+        engine.processAudioSample(OUT_L[i], OUT_R[i]);
     }
     limiter[0].ProcessBlock(OUT_L, size, 0.7f);
     limiter[1].ProcessBlock(OUT_R, size, 0.7f);
@@ -33,8 +33,8 @@ void init()
     hw.SetAudioSampleRate(kSampleRate);
     hw.SetAudioBlockSize(kBlockSize);
 
-    engine.Init(hw.AudioSampleRate());
-    controls.Init(hw, engine);
+    engine.init(hw.AudioSampleRate());
+    controls.init(hw, engine);
 
     for (auto &lim : limiter)
     {
@@ -101,7 +101,7 @@ void handleAnalogControls(Controls& controls, Engine& engine)
                                      .structure = structureKnobVal.getSmoothVal(),
                                      .reverbFb = reverbFbKnobVal.getSmoothVal(),
                                      .reverbMix = reverbMixKnobVal.getSmoothVal()};
-        engine.SetParameters(params);
+        engine.setParameters(params);
     }
 }
 
