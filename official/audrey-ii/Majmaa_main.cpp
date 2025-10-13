@@ -111,13 +111,14 @@ void handleDigitalControls(Controls &controls)
     {
         padTouchStates[instance] = controls.GetMpr121TouchStates(instance);
 
-        for (size_t i = 0; i < 16; i++)
+        for (size_t i = 0; i < Controls::kNumMprPads; i++)
         {
             if (hasTouchStateChangedToPressed(padTouchStates[instance], padTouchStatesPrev[instance], i))
             {
 #if DEBUG
                 Log::PrintLine("Pad %d on instance %d pressed", i, instance);
 #endif
+                engine.triggerNote(instance, i);
             }
         }
         // Update the previous touch states

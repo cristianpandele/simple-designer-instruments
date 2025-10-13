@@ -86,15 +86,19 @@ void Engine::triggerNote(const uint8_t instance, const uint8_t pad)
 
 void Engine::processAudioSample(float &outL, float &outR) {
   // --- processAudioSample Samples ---
-
   float sampL, sampR, verbL, verbR;
 
-  // processAudioSample through KS resonator
-  sampL = strings_[0].processAudioSample();
-  sampR = strings_[1].processAudioSample();
+  for (size_t voice = 0; voice < kNumberVoices; voice++)
+  {
+    for (size_t pad = 0; pad < 1/*kNumberPads*/; pad++)
+    {
+      // processAudioSample through KS resonator
+      sampL += strings_[voice].processAudioSample();
+      sampR += strings_[voice].processAudioSample();
+    }
+  }
 
   // ---> Reverb
-
   reverb_.Process(sampL, sampR, &verbL, &verbR);
 
   // ---> Output
