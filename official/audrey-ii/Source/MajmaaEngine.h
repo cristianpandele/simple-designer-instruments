@@ -21,8 +21,6 @@ class Engine {
             float reverbMix    = 0.0f;  // 0.0 - 1.0
         };
 
-        static constexpr size_t kNumberVoices = 3; // Number of polyphonic voices
-
         Engine() = default;
         ~Engine() = default;
 
@@ -35,6 +33,9 @@ class Engine {
         void processAudioSample(float &outL, float &outR);
 
     private:
+        static constexpr size_t kNumberVoices = 3; // Number of polyphonic voices
+        static constexpr size_t kNumberPads = 12;  // Number of pads per voice
+
         float sampleRate_;
         float reverbFb = 0.0f;
         float reverbMix = 0.0f;
@@ -43,6 +44,17 @@ class Engine {
 
         // String synth voice
         std::array<Vox, kNumberVoices> strings_;
+
+        // Scales (as MIDI notes) for the 3 instrument instances
+        const std::array<std::array<uint8_t, kNumberPads>, kNumberVoices> scales_ =
+        {{
+            // Instance 0 - A minor Harmonic (Hijaz) - Oud 1
+            {57, 59, 60, 62, 64, 65, 68, 69, 71, 72, 74, 76},
+            // Instance 1 - D minor - Oud 2
+            {62, 64, 65, 67, 69, 70, 72, 74, 76, 77, 79, 81},
+            // Instance 2 - C Major Pentatonic - Cellos
+            {55, 57, 59, 60, 62, 64, 66, 67, 69, 71, 72, 74}
+        }};
 
         void setAccent(const float accent);
         void setBrightness(const float brightness);

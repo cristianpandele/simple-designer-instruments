@@ -60,6 +60,30 @@ void Engine::setReverbMix(const float reverbMix)
   params_.reverbMix = unitclamp(reverbMix);
 }
 
+void Engine::triggerNote(const uint8_t instance, const uint8_t pad)
+{
+  // If the lowest note of the instrument, trigger the note on the first voice
+  if (pad == 0)
+  {
+    // Humanize parameters by adding a small random deviation
+    auto humanize = [](float value) {
+      float deviation = rand() / float(RAND_MAX);
+      deviation = map(deviation, 0.0f, 1.0f, 0.85f, 1.15f);
+      return unitclamp(value * deviation);
+    };
+
+    float brightness = humanize(params_.brightness);
+    float structure = humanize(params_.structure);
+    float damping = humanize(params_.damping);
+    float accent = humanize(params_.accent);
+
+    strings_[instance].setBrightness(brightness);
+    strings_[instance].setStructure(structure);
+    strings_[instance].setDamping(damping);
+    strings_[instance].NoteOn(mtof(scales_[instance][pad]), accent);
+  }
+}
+
 void Engine::processAudioSample(float &outL, float &outR) {
   // --- processAudioSample Samples ---
 
