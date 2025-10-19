@@ -2,8 +2,9 @@
 #ifndef MAJMAA_ENGINE_H
 #define MAJMAA_ENGINE_H
 
+#include <cstddef>
+#include <cstdint>
 #include <array>
-#include <vector>
 #include <daisysp.h>
 #include "vox.h"
 
@@ -16,6 +17,7 @@ class Engine {
         static constexpr size_t kNumberLiveVoices = 6; // Number of polyphonic voices
         static constexpr size_t kNumberPads = 12;  // Number of pads per voice
         static constexpr size_t kMaxSampleFrames = 48000; // Cached frames per note (~1s @ 48k)
+        static constexpr size_t kMaxKernelTaps = 128;     // FIR taps used for resampling
 
         struct Parameters {
             float accent       = 0.0f;  // 0.0 - 1.0
@@ -37,23 +39,25 @@ class Engine {
 
         void processAudioSample(float &outL, float &outR);
 
-        std::vector<float> renderResampledNote(const std::vector<float>& noteBuffer,
-                                               float srcSampleRate,
-                                               float dstSampleRate,
-                                               size_t numTaps = 96,
-                                               float normalizedCutoff = 0.45f) const;
+        size_t renderResampledNote(const float* source,
+                                   size_t sourceLength,
+                                   float pitchRatio,
+                                   float* destination,
+                                   size_t destinationCapacity,
+                                   size_t numTaps = 96,
+                                   float normalizedCutoff = 0.45f) const;
 
     private:
-        struct PadPlaybackState
-        {
+        struct PadPlaybackState {
             bool active = false;
             bool fromCache = false;
             bool recording = false;
             size_t writeIndex = 0;
             size_t playbackIndex = 0;
             uint8_t basePad = 0;
-            float *resampledBuffer = nullptr;
-            size_t resampledBufferSize = 0;
+            float* playbackBuffer = nullptr;
+            size_t playbackLength = 0;
+            float* resampleBuffer = nullptr;
         };
 
         float sampleRate_;
@@ -85,15 +89,15 @@ class Engine {
         void setReverbFeedback(const float reverbFb);
         void setReverbMix(const float reverbMix);
 
-        size_t countLiveNotes();
-        void triggerNoteResampleWrapper(const size_t length,
-                                        const uint8_t instance,
-                                        const uint8_t targetMidi,
-                                        const int closestPad,
+    size_t countLiveNotes() const;
+        void triggerNoteResampleWrapper(size_t length,
+                                        uint8_t instance,
+                                        uint8_t targetMidi,
+                                        int closestPad,
                                         PadPlaybackState &state);
-        void triggerNoteLiveNoteWrapper(const uint8_t instance,
-                                        const uint8_t targetMidi,
-                                        const int closestPad,
+        void triggerNoteLiveNoteWrapper(uint8_t instance,
+                                        uint8_t targetMidi,
+                                        int pad,
                                         PadPlaybackState &state);
 
         Engine(const Engine &other) = delete;

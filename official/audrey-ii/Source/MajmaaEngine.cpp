@@ -1,11 +1,8 @@
 #include "MajmaaEngine.h"
 #include "Utils.h"
 
-#include <algorithm>
 #include <cmath>
-#include <numeric>
-#include <random>
-#include <vector>
+#include <cstdlib>
 
 using namespace majmaa;
 using namespace majmaa::MajmaaSynth;
@@ -17,46 +14,72 @@ namespace
 {
   constexpr size_t kCacheVoices = Engine::kNumberLiveVoices;
   constexpr size_t kCachePads = Engine::kNumberPads;
-  constexpr size_t kCacheFrames = 48000;
+  constexpr size_t kCacheFrames = Engine::kMaxSampleFrames;
   constexpr size_t kSemitoneRadius = 3; // Max pitch shift steps from cached note
   constexpr float kPi = 3.14159265358979323846f;
 
   static DSY_SDRAM_BSS float noteCacheData[kCacheVoices][kCachePads][kCacheFrames];
+  static DSY_SDRAM_BSS float resampleCacheData[kCacheVoices][kCachePads][kCacheFrames];
   static size_t noteCacheLength[kCacheVoices][kCachePads];
   static uint8_t noteCacheMidi[kCacheVoices][kCachePads];
   static bool noteCacheValid[kCacheVoices][kCachePads];
 
-  std::mt19937 &rng()
+  inline float ClampFloat(const float value, const float minValue, const float maxValue)
   {
-    static thread_local std::mt19937 gen(std::random_device{}());
-    return gen;
+    if (value < minValue)
+    {
+      return minValue;
+    }
+    if (value > maxValue)
+    {
+      return maxValue;
+    }
+    return value;
   }
 
-  std::vector<float> buildKernel(size_t numTaps, float normalizedCutoff)
+  size_t buildKernel(float* kernel,
+                    size_t maxTaps,
+                    size_t requestedTaps,
+                    float normalizedCutoff)
   {
-    if (numTaps < 3)
+    if (kernel == nullptr || maxTaps == 0u)
     {
-      numTaps = 3;
+      return 0u;
     }
 
-    if ((numTaps % 2u) == 0u)
+    if (requestedTaps < 3u)
     {
-      ++numTaps;
+      requestedTaps = 3u;
     }
 
-    normalizedCutoff = std::clamp(normalizedCutoff, 0.01f, 0.99f);
+    if ((requestedTaps & 1u) == 0u)
+    {
+      ++requestedTaps;
+    }
 
-    std::vector<float> kernel(numTaps, 0.0f);
-    const size_t mid = numTaps / 2u;
+    if (requestedTaps > maxTaps)
+    {
+      requestedTaps = maxTaps;
+      if ((requestedTaps & 1u) == 0u && requestedTaps > 0u)
+      {
+        --requestedTaps;
+      }
+    }
+
+    normalizedCutoff = ClampFloat(normalizedCutoff, 0.01f, 0.99f);
+
+    const size_t mid = requestedTaps / 2u;
     float sum = 0.0f;
 
-    for (size_t i = 0; i < numTaps; ++i)
+    for (size_t i = 0; i < requestedTaps; ++i)
     {
-      const float n = static_cast<float>(i) - static_cast<float>(mid);
-      const float window = 0.42f - 0.5f * std::cos((2.0f * kPi * static_cast<float>(i)) / static_cast<float>(numTaps - 1u))
-                          + 0.08f * std::cos((4.0f * kPi * static_cast<float>(i)) / static_cast<float>(numTaps - 1u));
+      const float idx = static_cast<float>(i);
+      const float n = idx - static_cast<float>(mid);
+      const float window = 0.42f - 0.5f * cosf((2.0f * kPi * idx) / static_cast<float>(requestedTaps - 1u))
+                          + 0.08f * cosf((4.0f * kPi * idx) / static_cast<float>(requestedTaps - 1u));
       const float argument = kPi * n * normalizedCutoff;
-      const float sinc = std::abs(argument) < 1e-6f ? 1.0f : std::sin(argument) / argument;
+      const float absArgument = argument < 0.0f ? -argument : argument;
+      const float sinc = absArgument < 1e-6f ? 1.0f : sinf(argument) / argument;
       const float value = window * sinc;
       kernel[i] = value;
       sum += value;
@@ -64,92 +87,112 @@ namespace
 
     if (sum != 0.0f)
     {
-      for (auto &coeff : kernel)
+      const float invSum = 1.0f / sum;
+      for (size_t i = 0; i < requestedTaps; ++i)
       {
-        coeff /= sum;
+        kernel[i] *= invSum;
       }
     }
 
-    return kernel;
+    return requestedTaps;
   }
 
-  float lookupKernel(const std::vector<float> &kernel, float position)
+  float lookupKernel(const float* kernel, size_t kernelSize, float position)
   {
-    if (kernel.empty())
+    if (kernel == nullptr || kernelSize == 0u)
     {
       return 0.0f;
     }
 
-    const float center = static_cast<float>(kernel.size() - 1u) * 0.5f;
+    const float center = static_cast<float>(kernelSize - 1u) * 0.5f;
     float index = position + center;
-    index = std::clamp(index, 0.0f, static_cast<float>(kernel.size() - 1u));
+    const float maxIndex = static_cast<float>(kernelSize - 1u);
+    if (index < 0.0f)
+    {
+      index = 0.0f;
+    }
+    else if (index > maxIndex)
+    {
+      index = maxIndex;
+    }
 
-    const auto lower = static_cast<size_t>(std::floor(index));
-    const auto upper = std::min(lower + 1u, kernel.size() - 1u);
+    const size_t lower = static_cast<size_t>(index);
+    const size_t upper = (lower + 1u) < kernelSize ? lower + 1u : kernelSize - 1u;
     const float frac = index - static_cast<float>(lower);
     return kernel[lower] + (kernel[upper] - kernel[lower]) * frac;
   }
 
-  float computeRms(const std::vector<float> &buffer)
+  float computeRms(const float* buffer, size_t length)
   {
-    if (buffer.empty())
+    if (buffer == nullptr || length == 0u)
     {
       return 0.0f;
     }
 
-    const float energy = std::inner_product(buffer.begin(), buffer.end(), buffer.begin(), 0.0f);
-    return std::sqrt(energy / static_cast<float>(buffer.size()));
+    double energy = 0.0;
+    for (size_t i = 0; i < length; ++i)
+    {
+      const double sample = buffer[i];
+      energy += sample * sample;
+    }
+
+    const double meanEnergy = energy / static_cast<double>(length);
+    return meanEnergy > 0.0 ? static_cast<float>(sqrt(meanEnergy)) : 0.0f;
   }
 
-  void normalizeBuffer(std::vector<float> &buffer, float targetRms)
+  void normalizeBuffer(float* buffer, size_t length, float targetRms)
   {
-    if (buffer.empty())
+    if (buffer == nullptr || length == 0u || targetRms <= 0.0f)
     {
       return;
     }
 
-    const float currentRms = computeRms(buffer);
+    const float currentRms = computeRms(buffer, length);
     if (currentRms <= 0.0f)
     {
       return;
     }
 
     const float gain = targetRms / currentRms;
-    for (auto &sample : buffer)
+    for (size_t i = 0; i < length; ++i)
     {
-      sample *= gain;
+      buffer[i] *= gain;
     }
   }
 
-  void applyOnePoleLowpass(std::vector<float> &buffer, float sampleRate, float cutoff)
+  void applyOnePoleLowpass(float* buffer, size_t length, float sampleRate, float cutoff)
   {
-    if (buffer.empty() || sampleRate <= 0.0f || cutoff <= 0.0f)
+    if (buffer == nullptr || length == 0u || sampleRate <= 0.0f || cutoff <= 0.0f)
     {
       return;
     }
 
-    cutoff = std::min(cutoff, 0.49f * sampleRate);
-    const float alpha = std::exp((-2.0f * kPi * cutoff) / sampleRate);
-    const float a0 = 1.0f - alpha;
-    const float b1 = alpha;
-
-    float state = 0.0f;
-    for (auto &sample : buffer)
+    const float maxCutoff = 0.49f * sampleRate;
+    if (cutoff > maxCutoff)
     {
-      state = a0 * sample + b1 * state;
-      sample = state;
+      cutoff = maxCutoff;
+    }
+
+    const float alpha = expf((-2.0f * kPi * cutoff) / sampleRate);
+    const float a0 = 1.0f - alpha;
+    float state = 0.0f;
+
+    for (size_t i = 0; i < length; ++i)
+    {
+      state = a0 * buffer[i] + alpha * state;
+      buffer[i] = state;
     }
   }
 
-  int findClosestCachedPad(uint8_t instance, uint8_t midiNote)
+  int findClosestCachedPad(size_t instance, uint8_t midiNote)
   {
-    int bestPad = -1;
-    int bestDistance = 127;
-
     if (instance >= kCacheVoices)
     {
-      return bestPad;
+      return -1;
     }
+
+    int bestPad = -1;
+    int bestDistance = 127;
 
     for (size_t candidate = 0; candidate < kCachePads; ++candidate)
     {
@@ -158,12 +201,13 @@ namespace
         continue;
       }
 
-      const int distance = std::abs(static_cast<int>(noteCacheMidi[instance][candidate]) - static_cast<int>(midiNote));
-      if (distance <= static_cast<int>(kSemitoneRadius) && distance < bestDistance)
+      const int distance = static_cast<int>(noteCacheMidi[instance][candidate]) - static_cast<int>(midiNote);
+      const int absDistance = distance < 0 ? -distance : distance;
+      if (absDistance <= static_cast<int>(kSemitoneRadius) && absDistance < bestDistance)
       {
-        bestDistance = distance;
+        bestDistance = absDistance;
         bestPad = static_cast<int>(candidate);
-        if (distance == 0)
+        if (absDistance == 0)
         {
           break;
         }
@@ -198,11 +242,14 @@ void Engine::init(const float sampleRate) {
       noteCacheValid[inst][pad] = false;
       noteCacheLength[inst][pad] = 0;
       noteCacheMidi[inst][pad] = scales_[inst][pad];
-      padStates_[inst][pad] = {};
       if (inst < kNumberLiveVoices && pad < kNumberPads)
       {
-        padStates_[inst][pad] = {};
-        padStates_[inst][pad].basePad = static_cast<uint8_t>(pad);
+        PadPlaybackState &state = padStates_[inst][pad];
+        state = {};
+        state.basePad = static_cast<uint8_t>(pad);
+        state.playbackBuffer = nullptr;
+  state.playbackLength = 0;
+        state.resampleBuffer = resampleCacheData[inst][pad];
       }
     }
   }
@@ -248,7 +295,7 @@ void Engine::setReverbMix(const float reverbMix)
   params_.reverbMix = unitclamp(reverbMix);
 }
 
-size_t Engine::countLiveNotes()
+size_t Engine::countLiveNotes() const
 {
   size_t liveNotes = 0;
   for (size_t voice = 0; voice < kNumberLiveVoices; ++voice)
@@ -270,15 +317,33 @@ void Engine::triggerNoteResampleWrapper(const size_t length,
                                         const int closestPad,
                                         PadPlaybackState &state)
 {
-  std::vector<float> source(length);
-  std::copy_n(noteCacheData[instance][closestPad], length, source.begin());
+  const float* source = noteCacheData[instance][closestPad];
   const float sourceFreq = mtof(noteCacheMidi[instance][closestPad]);
   const float targetFreq = mtof(targetMidi);
   const float pitchRatio = (sourceFreq <= 0.0f) ? 1.0f : (targetFreq / sourceFreq);
-  std::vector<float> resampled = {}; // renderResampledNote(source, sampleRate_, sampleRate_ * pitchRatio);
-  std::copy(resampled.begin(), resampled.end(), state.resampledBuffer);
-  state.active = !state.resampledBufferSize;
-  state.fromCache = state.active;
+
+  const size_t generated = renderResampledNote(source,
+                                               length,
+                                               pitchRatio,
+                                               state.resampleBuffer,
+                                               kCacheFrames);
+
+  if (generated == 0u)
+  {
+    state.active = false;
+    state.fromCache = false;
+    state.recording = false;
+    state.playbackIndex = 0;
+    state.playbackBuffer = nullptr;
+    state.playbackLength = 0;
+    state.basePad = static_cast<uint8_t>(closestPad);
+    return;
+  }
+
+  state.playbackBuffer = state.resampleBuffer;
+  state.playbackLength = generated;
+  state.active = true;
+  state.fromCache = true;
   state.recording = false;
   state.playbackIndex = 0;
   state.basePad = static_cast<uint8_t>(closestPad);
@@ -311,6 +376,8 @@ void Engine::triggerNoteLiveNoteWrapper(const uint8_t instance,
   state.fromCache = false;
   state.writeIndex = 0;
   state.playbackIndex = 0;
+  state.playbackBuffer = nullptr;
+  state.playbackLength = 0;
   noteCacheValid[instance][pad] = false;
   noteCacheLength[instance][pad] = 0;
   noteCacheMidi[instance][pad] = targetMidi;
@@ -324,11 +391,15 @@ void Engine::triggerNote(const uint8_t instance, const uint8_t pad)
   }
 
   auto &state = padStates_[instance][pad];
+  float* resampleStorage = resampleCacheData[instance][pad];
   state = {};
   state.basePad = pad;
+  state.playbackBuffer = nullptr;
+  state.playbackLength = 0;
+  state.resampleBuffer = resampleStorage;
 
   const uint8_t targetMidi = scales_[instance][pad];
-  const int closestPad = findClosestCachedPad(instance, targetMidi);
+  const int closestPad = findClosestCachedPad(static_cast<size_t>(instance), targetMidi);
 
   if (closestPad >= 0)
   {
@@ -378,34 +449,37 @@ void Engine::processAudioSample(float &outL, float &outR) {
 
       if (state.recording)
       {
-        if (state.writeIndex < kMaxSampleFrames)
+        if (state.writeIndex < kCacheFrames)
         {
           noteCacheData[voice][pad][state.writeIndex] = liveSample;
           ++state.writeIndex;
           noteCacheLength[voice][pad] = state.writeIndex;
           sampleValue = liveSample;
+          state.playbackBuffer = noteCacheData[voice][pad];
+          state.playbackLength = state.writeIndex;
         }
 
-        if (state.writeIndex >= kMaxSampleFrames)
+        if (state.writeIndex >= kCacheFrames)
         {
           noteCacheValid[voice][pad] = true;
           state.recording = false;
           state.fromCache = true;
           state.playbackIndex = 0;
-          // state.resampledBuffer = &noteCacheData[voice][pad][0];
-          // state.resampledBufferSize = noteCacheLength[voice][pad];
+          state.playbackBuffer = noteCacheData[voice][pad];
+          state.playbackLength = noteCacheLength[voice][pad];
         }
       }
-      else if (state.active && state.fromCache)
+      else if (state.active && state.fromCache && state.playbackBuffer != nullptr)
       {
-        if (state.playbackIndex < state.resampledBufferSize)
+        if (state.playbackIndex < state.playbackLength)
         {
-          sampleValue = state.resampledBuffer[state.playbackIndex++];
+          sampleValue = state.playbackBuffer[state.playbackIndex++];
         }
         else
         {
           state.active = false;
-          state.resampledBufferSize = 0;
+          state.playbackBuffer = nullptr;
+          state.playbackLength = 0;
         }
       }
 
@@ -426,63 +500,83 @@ void Engine::processAudioSample(float &outL, float &outR) {
   outR = lerp(dryR, verbR, mix);
 }
 
-std::vector<float> Engine::renderResampledNote(const std::vector<float> &noteBuffer,
-                                               float srcSampleRate,
-                                               float dstSampleRate,
-                                               size_t numTaps,
-                                               float normalizedCutoff) const
+size_t Engine::renderResampledNote(const float* source,
+                                   size_t sourceLength,
+                                   float pitchRatio,
+                                   float* destination,
+                                   size_t destinationCapacity,
+                                   size_t numTaps,
+                                   float normalizedCutoff) const
 {
-  if (noteBuffer.empty() || srcSampleRate <= 0.0f || dstSampleRate <= 0.0f)
+  if (source == nullptr || destination == nullptr || sourceLength == 0u || destinationCapacity == 0u)
   {
-    return {};
+    return 0u;
   }
 
-  auto kernel = buildKernel(numTaps, normalizedCutoff);
-  const size_t halfTaps = kernel.size() / 2u;
-  if (halfTaps == 0u || noteBuffer.size() <= halfTaps)
+  float kernel[Engine::kMaxKernelTaps];
+  const size_t kernelSize = buildKernel(kernel, Engine::kMaxKernelTaps, numTaps, normalizedCutoff);
+  if (kernelSize == 0u)
   {
-    return noteBuffer;
+    return 0u;
   }
 
-  const float pitchRatio = dstSampleRate / srcSampleRate;
-  std::vector<float> output(noteBuffer.size(), 0.0f);
+  const size_t halfKernel = kernelSize / 2u;
+  if (sourceLength <= halfKernel)
+  {
+    return 0u;
+  }
 
-  std::uniform_real_distribution<float> phaseDistribution(0.0f, 1.0f);
-  float phase = phaseDistribution(rng());
-  const float maxPhase = static_cast<float>(noteBuffer.size() - halfTaps - 1u);
+  const float safePitch = (pitchRatio <= 0.0f) ? 1.0f : pitchRatio;
+  float phase = static_cast<float>(rand() & 0x3FF) / 1024.0f; // random fractional offset
+  const float maxPhase = static_cast<float>(sourceLength - halfKernel - 1u);
+  if (phase > maxPhase)
+  {
+    phase = 0.0f;
+  }
 
-  for (size_t n = 0; n < output.size(); ++n)
+  size_t outIndex = 0u;
+
+  while (outIndex < destinationCapacity && phase < maxPhase)
   {
     const size_t indexInt = static_cast<size_t>(phase);
     const float frac = phase - static_cast<float>(indexInt);
-
     float acc = 0.0f;
-    for (int tap = -static_cast<int>(halfTaps); tap <= static_cast<int>(halfTaps); ++tap)
+
+    for (int tap = -static_cast<int>(halfKernel); tap <= static_cast<int>(halfKernel); ++tap)
     {
       int sampleIndex = static_cast<int>(indexInt) + tap;
-      sampleIndex = std::clamp(sampleIndex, 0, static_cast<int>(noteBuffer.size() - 1u));
-      const float weight = lookupKernel(kernel, static_cast<float>(tap) - frac);
-      acc += noteBuffer[static_cast<size_t>(sampleIndex)] * weight;
+      if (sampleIndex < 0)
+      {
+        sampleIndex = 0;
+      }
+      else if (sampleIndex >= static_cast<int>(sourceLength))
+      {
+        sampleIndex = static_cast<int>(sourceLength) - 1;
+      }
+
+      const float weight = lookupKernel(kernel, kernelSize, static_cast<float>(tap) - frac);
+      acc += source[static_cast<size_t>(sampleIndex)] * weight;
     }
 
-    output[n] = acc;
-    phase += pitchRatio;
-
-    if (phase >= maxPhase)
-    {
-      output.resize(n + 1u);
-      break;
-    }
+    destination[outIndex++] = acc;
+    phase += safePitch;
   }
 
-  const float targetRms = computeRms(noteBuffer);
+  if (outIndex == 0u)
+  {
+    return 0u;
+  }
+
+  const float targetRms = computeRms(source, sourceLength);
   if (targetRms > 0.0f)
   {
-    normalizeBuffer(output, targetRms);
+    normalizeBuffer(destination, outIndex, targetRms);
   }
 
-  const float nyquist = 0.5f * std::min(srcSampleRate, dstSampleRate);
-  applyOnePoleLowpass(output, dstSampleRate, nyquist * normalizedCutoff);
+  const float effectiveRate = sampleRate_ * safePitch;
+  const float minRate = (effectiveRate < sampleRate_) ? effectiveRate : sampleRate_;
+  const float nyquist = 0.5f * (minRate > 0.0f ? minRate : sampleRate_);
+  applyOnePoleLowpass(destination, outIndex, sampleRate_, nyquist * normalizedCutoff);
 
-  return output;
+  return outIndex;
 }
