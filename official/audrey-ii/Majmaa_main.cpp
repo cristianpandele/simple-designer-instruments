@@ -90,17 +90,20 @@ void handleAnalogControls(Controls& controls, Engine& engine)
     structureKnobVal  = mapControlValue(hw.adc.GetFloat(3));
     reverbFbKnobVal   = mapControlValue(hw.adc.GetFloat(4));
     reverbMixKnobVal  = mapControlValue(hw.adc.GetFloat(5));
+    volumeKnobVal     = mapControlValue(hw.adc.GetFloat(6));
 
     // Only update the engine if any of the values have changed (and thus values are smoothing)
     if (accentKnobVal.isSmoothing() || brightnessKnobVal.isSmoothing() || dampingKnobVal.isSmoothing() ||
-        structureKnobVal.isSmoothing() || reverbFbKnobVal.isSmoothing() || reverbMixKnobVal.isSmoothing())
+        structureKnobVal.isSmoothing() || reverbFbKnobVal.isSmoothing() || reverbMixKnobVal.isSmoothing() ||
+        volumeKnobVal.isSmoothing())
     {
         Engine::Parameters params = {.accent = accentKnobVal.getSmoothVal(),
                                      .brightness = brightnessKnobVal.getSmoothVal(),
                                      .damping = dampingKnobVal.getSmoothVal(),
                                      .structure = structureKnobVal.getSmoothVal(),
                                      .reverbFb = reverbFbKnobVal.getSmoothVal(),
-                                     .reverbMix = reverbMixKnobVal.getSmoothVal()};
+                                     .reverbMix = reverbMixKnobVal.getSmoothVal(),
+                                     .volume = volumeKnobVal.getSmoothVal()};
         engine.setParameters(params);
     }
 }
@@ -135,6 +138,7 @@ void logDebugInfo()
     Log::PrintLine("Structure       : " FLT_FMT(5), FLT_VAR(5, structureKnobVal.getSmoothVal()));
     Log::PrintLine("Reverb Fb       : " FLT_FMT(5), FLT_VAR(5, reverbFbKnobVal.getSmoothVal()));
     Log::PrintLine("Reverb Mix      : " FLT_FMT(5), FLT_VAR(5, reverbMixKnobVal.getSmoothVal()));
+    Log::PrintLine("Volume          : " FLT_FMT(5), FLT_VAR(5, volumeKnobVal.getSmoothVal()));
     // Log::PrintLine("String Freq   : " FLT_FMT(5), FLT_VAR(5, engine.getStringFreq()));
 
 #ifdef PRINT_CPU_LOAD

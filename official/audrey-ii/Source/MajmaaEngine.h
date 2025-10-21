@@ -26,6 +26,7 @@ class Engine {
             float structure    = 0.5f;  // 0.0 - 1.0
             float reverbFb     = 0.0f;  // 0.0 - 1.0
             float reverbMix    = 0.0f;  // 0.0 - 1.0
+            float volume       = 0.5f;  // 0.0 - 1.0
         };
 
         Engine() = default;
@@ -61,8 +62,6 @@ class Engine {
         };
 
         float sampleRate_;
-        float reverbFb = 0.0f;
-        float reverbMix = 0.0f;
 
         Parameters params_;
 
@@ -88,6 +87,7 @@ class Engine {
         void setStructure(const float structure);
         void setReverbFeedback(const float reverbFb);
         void setReverbMix(const float reverbMix);
+        void setVolume(const float volume);
 
     size_t countLiveNotes() const;
         void triggerNoteResampleWrapper(size_t length,

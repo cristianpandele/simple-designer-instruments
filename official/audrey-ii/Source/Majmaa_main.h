@@ -35,6 +35,7 @@ static SmoothValue dampingKnobVal = SmoothValue(0.5f, 75.0f, kSamplePeriodMs * k
 static SmoothValue structureKnobVal = SmoothValue(0.5f, 75.0f, kSamplePeriodMs * kBlockSize);
 static SmoothValue reverbFbKnobVal = SmoothValue(0.0f, 75.0f, kSamplePeriodMs * kBlockSize);
 static SmoothValue reverbMixKnobVal = SmoothValue(0.0f, 75.0f, kSamplePeriodMs * kBlockSize);
+static SmoothValue volumeKnobVal = SmoothValue(0.5f, 75.0f, kSamplePeriodMs * kBlockSize);
 
 // Pad touch states
 static std::bitset<16> padTouchStates[controls.kNumMprInstances];

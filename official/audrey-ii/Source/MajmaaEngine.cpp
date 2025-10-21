@@ -266,6 +266,7 @@ void Engine::setParameters(const Parameters &params) {
   setStructure(params.structure);
   setReverbFeedback(params.reverbFb);
   setReverbMix(params.reverbMix);
+  setVolume(params.volume);
 }
 
 void Engine::setAccent(const float accent) {
@@ -293,6 +294,11 @@ void Engine::setReverbFeedback(const float reverbFb)
 void Engine::setReverbMix(const float reverbMix)
 {
   params_.reverbMix = unitclamp(reverbMix);
+}
+
+void Engine::setVolume(const float volume)
+{
+  params_.volume = unitclamp(volume);
 }
 
 size_t Engine::countLiveNotes() const
@@ -495,9 +501,13 @@ void Engine::processAudioSample(float &outL, float &outR) {
   float verbR = 0.0f;
   reverb_.Process(dryL, dryR, &verbL, &verbR);
 
-  const float mix = reverbMix;
-  outL = lerp(dryL, verbL, mix);
-  outR = lerp(dryR, verbR, mix);
+  // Apply reverb mix
+  outL = lerp(dryL, verbL, params_.reverbMix);
+  outR = lerp(dryR, verbR, params_.reverbMix);
+
+  // Apply volume
+  outL *= params_.volume;
+  outR *= params_.volume;
 }
 
 size_t Engine::renderResampledNote(const float* source,

@@ -24,7 +24,8 @@ public:
         Damping,    // 2
         Structure,  // 3
         ReverbFb,   // 4
-        ReverbMix   // 5
+        ReverbMix,  // 5
+        Volume      // 6
     };
 
     Controls() = default;
@@ -37,7 +38,7 @@ public:
     uint16_t GetMpr121TouchStates(uint8_t instance);
 
 private:
-    static const size_t kNumAdcChannels  = 6;
+    static const size_t kNumAdcChannels  = 7;
 
     daisy::AnalogControl controls_[kNumAdcChannels];
 
