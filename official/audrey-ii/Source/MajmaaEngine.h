@@ -14,7 +14,8 @@ namespace MajmaaSynth {
 class Engine {
 
     public:
-        static constexpr size_t kNumberLiveVoices = 6; // Number of polyphonic voices
+        static constexpr size_t kNumberLiveVoices = 3; // Number of polyphonic voices
+        static constexpr size_t kNumberRetriggers = 5; // Number of times a voice can be retriggered after being sampled
         static constexpr size_t kNumberPads = 12;  // Number of pads per voice
         static constexpr size_t kNumberMprInstances = 3;  // Number of MPR instances
         static constexpr size_t kMaxSampleFrames = 2 * 48000; // Cached frames per note (~2s @ 48k)
@@ -54,6 +55,7 @@ class Engine {
             bool active = false;
             bool fromCache = false;
             bool recording = false;
+            uint8_t age = 0;
             size_t writeIndex = 0;
             size_t playbackIndex = 0;
             uint8_t basePad = 0;

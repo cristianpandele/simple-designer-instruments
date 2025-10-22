@@ -184,7 +184,7 @@ namespace
     }
   }
 
-  int findClosestCachedPad(size_t instance, uint8_t midiNote)
+  int findClosestCachedPad(size_t instance, uint8_t midiNote, bool force = false)
   {
     if (instance >= kCacheVoices)
     {
@@ -203,7 +203,7 @@ namespace
 
       const int distance = static_cast<int>(noteCacheMidi[instance][candidate]) - static_cast<int>(midiNote);
       const int absDistance = distance < 0 ? -distance : distance;
-      if (absDistance <= static_cast<int>(kSemitoneRadius) && absDistance < bestDistance)
+      if (force || (absDistance <= static_cast<int>(kSemitoneRadius)) && absDistance < bestDistance)
       {
         bestDistance = absDistance;
         bestPad = static_cast<int>(candidate);
@@ -337,6 +337,7 @@ void Engine::triggerNoteResampleWrapper(const size_t length,
   if (generated == 0u)
   {
     state.active = false;
+    state.age = 0;
     state.fromCache = false;
     state.recording = false;
     state.playbackIndex = 0;
@@ -349,6 +350,7 @@ void Engine::triggerNoteResampleWrapper(const size_t length,
   state.playbackBuffer = state.resampleBuffer;
   state.playbackLength = generated;
   state.active = true;
+  state.age += 1;
   state.fromCache = true;
   state.recording = false;
   state.playbackIndex = 0;
@@ -378,6 +380,7 @@ void Engine::triggerNoteLiveNoteWrapper(const uint8_t instance,
   strings_[instance].NoteOn(mtof(targetMidi), accent);
 
   state.active = true;
+  state.age = 0;
   state.recording = true;
   state.fromCache = false;
   state.writeIndex = 0;
@@ -397,17 +400,28 @@ void Engine::triggerNote(const uint8_t instance, const uint8_t pad)
   }
 
   auto &state = padStates_[instance][pad];
-  float* resampleStorage = resampleCacheData[instance][pad];
+  const uint8_t previousAge = state.age;
   state = {};
+  state.age = previousAge;
   state.basePad = pad;
   state.playbackBuffer = nullptr;
   state.playbackLength = 0;
   state.resampleBuffer = resampleStorage;
 
   const uint8_t targetMidi = scales_[instance][pad];
-  const int closestPad = findClosestCachedPad(static_cast<size_t>(instance), targetMidi);
+  int closestPad = -1;
 
-  if (closestPad >= 0)
+  if (countLiveNotes() >= kNumberLiveVoices)
+  {
+    // Log::PrintLine("Cannot synthesize note for pad %d on instance %d: maximum live notes reached!", pad, instance);
+    closestPad = findClosestCachedPad(static_cast<size_t>(instance), targetMidi, true);
+  }
+  else
+  {
+    closestPad = findClosestCachedPad(static_cast<size_t>(instance), targetMidi, false);
+  }
+
+  if ((closestPad >= 0) && (state.age < kNumberRetriggers))
   {
     const size_t length = noteCacheLength[instance][closestPad];
     if (length > 0U)
