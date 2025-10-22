@@ -418,12 +418,6 @@ void Engine::triggerNote(const uint8_t instance, const uint8_t pad)
     }
   }
 
-  if (countLiveNotes() >=  kNumberLiveVoices)
-  {
-    Log::PrintLine("Cannot trigger note for pad %d on instance %d: maximum live notes reached!", pad, instance);
-    return;
-  }
-
   // Fall back to live synthesis and capture the note
   Log::PrintLine("Synthesizing note for %d on instance %d!", pad, instance);
   triggerNoteLiveNoteWrapper(instance, targetMidi, pad, state);
@@ -434,20 +428,8 @@ void Engine::processAudioSample(float &outL, float &outR) {
   float dryL = 0.0f;
   float dryR = 0.0f;
 
-  for (size_t voice = 0; voice < kNumberLiveVoices; ++voice)
+  for (size_t voice = 0; voice < kNumberMprInstances; ++voice)
   {
-    bool needsLiveSample = false;
-    for (size_t pad = 0; pad < kNumberPads; ++pad)
-    {
-      if (padStates_[voice][pad].recording)
-      {
-        needsLiveSample = true;
-        break;
-      }
-    }
-
-    const float liveSample = needsLiveSample ? strings_[voice].processAudioSample() : 0.0f;
-
     for (size_t pad = 0; pad < kNumberPads; ++pad)
     {
       auto &state = padStates_[voice][pad];
@@ -457,6 +439,7 @@ void Engine::processAudioSample(float &outL, float &outR) {
       {
         if (state.writeIndex < kCacheFrames)
         {
+          const float liveSample = strings_[voice].processAudioSample();
           noteCacheData[voice][pad][state.writeIndex] = liveSample;
           ++state.writeIndex;
           noteCacheLength[voice][pad] = state.writeIndex;
@@ -464,8 +447,7 @@ void Engine::processAudioSample(float &outL, float &outR) {
           state.playbackBuffer = noteCacheData[voice][pad];
           state.playbackLength = state.writeIndex;
         }
-
-        if (state.writeIndex >= kCacheFrames)
+        else
         {
           noteCacheValid[voice][pad] = true;
           state.recording = false;

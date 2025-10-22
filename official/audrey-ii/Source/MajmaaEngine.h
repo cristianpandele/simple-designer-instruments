@@ -16,7 +16,8 @@ class Engine {
     public:
         static constexpr size_t kNumberLiveVoices = 6; // Number of polyphonic voices
         static constexpr size_t kNumberPads = 12;  // Number of pads per voice
-        static constexpr size_t kMaxSampleFrames = 48000; // Cached frames per note (~1s @ 48k)
+        static constexpr size_t kNumberMprInstances = 3;  // Number of MPR instances
+        static constexpr size_t kMaxSampleFrames = 2 * 48000; // Cached frames per note (~2s @ 48k)
         static constexpr size_t kMaxKernelTaps = 128;     // FIR taps used for resampling
 
         struct Parameters {
