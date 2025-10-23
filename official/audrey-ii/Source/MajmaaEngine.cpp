@@ -19,7 +19,6 @@ namespace
   constexpr float kPi = 3.14159265358979323846f;
 
   static DSY_SDRAM_BSS float noteCacheData[kCacheVoices][kCachePads][kCacheFrames];
-  static DSY_SDRAM_BSS float resampleCacheData[kCacheVoices][kCachePads][kCacheFrames];
   static size_t noteCacheLength[kCacheVoices][kCachePads];
   static uint8_t noteCacheMidi[kCacheVoices][kCachePads];
   static bool noteCacheValid[kCacheVoices][kCachePads];
@@ -122,68 +121,6 @@ namespace
     return kernel[lower] + (kernel[upper] - kernel[lower]) * frac;
   }
 
-  float computeRms(const float* buffer, size_t length)
-  {
-    if (buffer == nullptr || length == 0u)
-    {
-      return 0.0f;
-    }
-
-    double energy = 0.0;
-    for (size_t i = 0; i < length; ++i)
-    {
-      const double sample = buffer[i];
-      energy += sample * sample;
-    }
-
-    const double meanEnergy = energy / static_cast<double>(length);
-    return meanEnergy > 0.0 ? static_cast<float>(sqrt(meanEnergy)) : 0.0f;
-  }
-
-  void normalizeBuffer(float* buffer, size_t length, float targetRms)
-  {
-    if (buffer == nullptr || length == 0u || targetRms <= 0.0f)
-    {
-      return;
-    }
-
-    const float currentRms = computeRms(buffer, length);
-    if (currentRms <= 0.0f)
-    {
-      return;
-    }
-
-    const float gain = targetRms / currentRms;
-    for (size_t i = 0; i < length; ++i)
-    {
-      buffer[i] *= gain;
-    }
-  }
-
-  void applyOnePoleLowpass(float* buffer, size_t length, float sampleRate, float cutoff)
-  {
-    if (buffer == nullptr || length == 0u || sampleRate <= 0.0f || cutoff <= 0.0f)
-    {
-      return;
-    }
-
-    const float maxCutoff = 0.49f * sampleRate;
-    if (cutoff > maxCutoff)
-    {
-      cutoff = maxCutoff;
-    }
-
-    const float alpha = expf((-2.0f * kPi * cutoff) / sampleRate);
-    const float a0 = 1.0f - alpha;
-    float state = 0.0f;
-
-    for (size_t i = 0; i < length; ++i)
-    {
-      state = a0 * buffer[i] + alpha * state;
-      buffer[i] = state;
-    }
-  }
-
   int findClosestCachedPad(size_t instance, uint8_t midiNote, bool force = false)
   {
     if (instance >= kCacheVoices)
@@ -203,7 +140,7 @@ namespace
 
       const int distance = static_cast<int>(noteCacheMidi[instance][candidate]) - static_cast<int>(midiNote);
       const int absDistance = distance < 0 ? -distance : distance;
-      if (force || (absDistance <= static_cast<int>(kSemitoneRadius)) && absDistance < bestDistance)
+      if (force || ((absDistance <= static_cast<int>(kSemitoneRadius)) && (absDistance < bestDistance)))
       {
         bestDistance = absDistance;
         bestPad = static_cast<int>(candidate);
@@ -248,8 +185,7 @@ void Engine::init(const float sampleRate) {
         state = {};
         state.basePad = static_cast<uint8_t>(pad);
         state.playbackBuffer = nullptr;
-  state.playbackLength = 0;
-        state.resampleBuffer = resampleCacheData[inst][pad];
+        state.playbackLength = 0;
       }
     }
   }
@@ -319,36 +255,87 @@ size_t Engine::countLiveNotes() const
 
 void Engine::triggerNoteResampleWrapper(const size_t length,
                                         const uint8_t instance,
-                                        const uint8_t targetMidi,
+                                        const uint8_t targetNote,
                                         const int closestPad,
                                         PadPlaybackState &state)
 {
-  const float* source = noteCacheData[instance][closestPad];
+  PadPlaybackState::ResampleState &resample = state.resample;
+  resample = {};
+
+  resample.source = noteCacheData[instance][closestPad];
+  resample.sourceLength = length;
+
   const float sourceFreq = mtof(noteCacheMidi[instance][closestPad]);
-  const float targetFreq = mtof(targetMidi);
-  const float pitchRatio = (sourceFreq <= 0.0f) ? 1.0f : (targetFreq / sourceFreq);
+  const float targetFreq = mtof(targetNote);
+  const float rawPitch = (sourceFreq <= 0.0f) ? 1.0f : (targetFreq / sourceFreq);
+  const float safePitch = rawPitch <= 0.0f ? 1.0f : rawPitch;
 
-  const size_t generated = renderResampledNote(source,
-                                               length,
-                                               pitchRatio,
-                                               state.resampleBuffer,
-                                               kCacheFrames);
+  resample.pitchRatio = safePitch;
+  resample.kernelSize = buildKernel(resample.kernel,
+                                    kMaxKernelTaps,
+                                    kResampleKernelTaps,
+                                    kResampleCutoff);
 
-  if (generated == 0u)
+  if (resample.kernelSize == 0u || resample.source == nullptr)
   {
     state.active = false;
-    state.age = 0;
     state.fromCache = false;
     state.recording = false;
     state.playbackIndex = 0;
     state.playbackBuffer = nullptr;
     state.playbackLength = 0;
-    state.basePad = static_cast<uint8_t>(closestPad);
+    state.age = 0;
     return;
   }
 
-  state.playbackBuffer = state.resampleBuffer;
-  state.playbackLength = generated;
+  const size_t halfKernel = resample.kernelSize / 2u;
+  if (length <= (halfKernel + 1u))
+  {
+    state.active = false;
+    state.fromCache = false;
+    state.recording = false;
+    state.playbackIndex = 0;
+    state.playbackBuffer = nullptr;
+    state.playbackLength = 0;
+    resample.active = false;
+    return;
+  }
+
+  resample.phase = static_cast<float>(rand() & 0x3FF) / 1024.0f;
+  resample.maxPhase = static_cast<float>(length - halfKernel - 1u);
+  if (resample.phase > resample.maxPhase)
+  {
+    resample.phase = 0.0f;
+  }
+
+  const float effectiveRate = sampleRate_ * safePitch;
+  const float minRate = (effectiveRate < sampleRate_) ? effectiveRate : sampleRate_;
+  const float nyquist = 0.5f * (minRate > 0.0f ? minRate : sampleRate_);
+  float cutoff = nyquist * kResampleCutoff;
+  const float maxCutoff = 0.49f * sampleRate_;
+  if (cutoff > maxCutoff)
+  {
+    cutoff = maxCutoff;
+  }
+
+  if (cutoff <= 0.0f)
+  {
+    resample.lowpassAlpha = 0.0f;
+    resample.lowpassA0 = 1.0f;
+    resample.lowpassState = 0.0f;
+  }
+  else
+  {
+    const float alpha = expf((-2.0f * kPi * cutoff) / sampleRate_);
+    resample.lowpassAlpha = alpha;
+    resample.lowpassA0 = 1.0f - alpha;
+    resample.lowpassState = 0.0f;
+  }
+
+  resample.active = true;
+
+  state.playbackBuffer = nullptr;
+  state.playbackLength = length;
   state.active = true;
   state.age += 1;
   state.fromCache = true;
@@ -358,7 +345,7 @@ void Engine::triggerNoteResampleWrapper(const size_t length,
 }
 
 void Engine::triggerNoteLiveNoteWrapper(const uint8_t instance,
-                                        const uint8_t targetMidi,
+                                        const uint8_t targetNote,
                                         const int pad,
                                         PadPlaybackState &state)
 {
@@ -377,7 +364,7 @@ void Engine::triggerNoteLiveNoteWrapper(const uint8_t instance,
   strings_[instance].setBrightness(brightness);
   strings_[instance].setStructure(structure);
   strings_[instance].setDamping(damping);
-  strings_[instance].NoteOn(mtof(targetMidi), accent);
+  strings_[instance].NoteOn(mtof(targetNote), accent);
 
   state.active = true;
   state.age = 0;
@@ -389,13 +376,14 @@ void Engine::triggerNoteLiveNoteWrapper(const uint8_t instance,
   state.playbackLength = 0;
   noteCacheValid[instance][pad] = false;
   noteCacheLength[instance][pad] = 0;
-  noteCacheMidi[instance][pad] = targetMidi;
+  noteCacheMidi[instance][pad] = targetNote;
 }
 
 void Engine::triggerNote(const uint8_t instance, const uint8_t pad)
 {
   if (instance >= kNumberLiveVoices || pad >= kNumberPads)
   {
+    // Invalid instance or pad
     return;
   }
 
@@ -406,39 +394,38 @@ void Engine::triggerNote(const uint8_t instance, const uint8_t pad)
   state.basePad = pad;
   state.playbackBuffer = nullptr;
   state.playbackLength = 0;
-  state.resampleBuffer = resampleStorage;
 
-  const uint8_t targetMidi = scales_[instance][pad];
+  const uint8_t targetNote = scales_[instance][pad];
   int closestPad = -1;
+  bool forceSearch = false;
 
   if (countLiveNotes() >= kNumberLiveVoices)
   {
     // Log::PrintLine("Cannot synthesize note for pad %d on instance %d: maximum live notes reached!", pad, instance);
-    closestPad = findClosestCachedPad(static_cast<size_t>(instance), targetMidi, true);
-  }
-  else
-  {
-    closestPad = findClosestCachedPad(static_cast<size_t>(instance), targetMidi, false);
+    forceSearch = true;
   }
 
+  closestPad = findClosestCachedPad(static_cast<size_t>(instance), targetNote, forceSearch);
   if ((closestPad >= 0) && (state.age < kNumberRetriggers))
   {
     const size_t length = noteCacheLength[instance][closestPad];
     if (length > 0U)
     {
-      Log::PrintLine("Resampling note cached for pad %d on instance %d!", closestPad, instance);
-      triggerNoteResampleWrapper(length, instance, targetMidi, closestPad, state);
+      // Log::PrintLine("Resampling note cached for pad %d on instance %d, age: %d!", closestPad, instance, state.age);
+      triggerNoteResampleWrapper(length, instance, targetNote, closestPad, state);
       return;
     }
   }
 
   // Fall back to live synthesis and capture the note
-  Log::PrintLine("Synthesizing note for %d on instance %d!", pad, instance);
-  triggerNoteLiveNoteWrapper(instance, targetMidi, pad, state);
+  // Log::PrintLine("Synthesizing note for %d on instance %d!", pad, instance);
+  if (countLiveNotes() < kNumberLiveVoices)
+  {
+    triggerNoteLiveNoteWrapper(instance, targetNote, pad, state);
+  }
 }
 
 void Engine::processAudioSample(float &outL, float &outR) {
-  // --- processAudioSample Samples ---
   float dryL = 0.0f;
   float dryR = 0.0f;
 
@@ -465,17 +452,41 @@ void Engine::processAudioSample(float &outL, float &outR) {
         {
           noteCacheValid[voice][pad] = true;
           state.recording = false;
-          state.fromCache = true;
+          state.active = false;
+          state.fromCache = false;
           state.playbackIndex = 0;
-          state.playbackBuffer = noteCacheData[voice][pad];
-          state.playbackLength = noteCacheLength[voice][pad];
+          state.playbackBuffer = nullptr;
+          state.playbackLength = 0;
         }
       }
-      else if (state.active && state.fromCache && state.playbackBuffer != nullptr)
+      else if (state.active && state.fromCache)
       {
-        if (state.playbackIndex < state.playbackLength)
+        if (state.resample.active)
         {
-          sampleValue = state.playbackBuffer[state.playbackIndex++];
+          float resampledSample = 0.0f;
+          if (renderResampledNote(state, resampledSample))
+          {
+            sampleValue = resampledSample;
+          }
+          else
+          {
+            state.active = false;
+            state.playbackBuffer = nullptr;
+            state.playbackLength = 0;
+          }
+        }
+        else if (state.playbackBuffer != nullptr)
+        {
+          if (state.playbackIndex < state.playbackLength)
+          {
+            sampleValue = state.playbackBuffer[state.playbackIndex++];
+          }
+          else
+          {
+            state.active = false;
+            state.playbackBuffer = nullptr;
+            state.playbackLength = 0;
+          }
         }
         else
         {
@@ -506,83 +517,87 @@ void Engine::processAudioSample(float &outL, float &outR) {
   outR *= params_.volume;
 }
 
-size_t Engine::renderResampledNote(const float* source,
-                                   size_t sourceLength,
-                                   float pitchRatio,
-                                   float* destination,
-                                   size_t destinationCapacity,
-                                   size_t numTaps,
-                                   float normalizedCutoff) const
+bool Engine::renderResampledNote(PadPlaybackState &state,
+                                 float &outSample,
+                                 size_t numTaps,
+                                 float normalizedCutoff) const
 {
-  if (source == nullptr || destination == nullptr || sourceLength == 0u || destinationCapacity == 0u)
+  PadPlaybackState::ResampleState &resample = state.resample;
+
+  if (!resample.active || resample.source == nullptr || resample.sourceLength == 0u)
   {
-    return 0u;
+    resample.active = false;
+    return false;
   }
 
-  float kernel[Engine::kMaxKernelTaps];
-  const size_t kernelSize = buildKernel(kernel, Engine::kMaxKernelTaps, numTaps, normalizedCutoff);
-  if (kernelSize == 0u)
+  if (resample.kernelSize == 0u)
   {
-    return 0u;
-  }
-
-  const size_t halfKernel = kernelSize / 2u;
-  if (sourceLength <= halfKernel)
-  {
-    return 0u;
-  }
-
-  const float safePitch = (pitchRatio <= 0.0f) ? 1.0f : pitchRatio;
-  float phase = static_cast<float>(rand() & 0x3FF) / 1024.0f; // random fractional offset
-  const float maxPhase = static_cast<float>(sourceLength - halfKernel - 1u);
-  if (phase > maxPhase)
-  {
-    phase = 0.0f;
-  }
-
-  size_t outIndex = 0u;
-
-  while (outIndex < destinationCapacity && phase < maxPhase)
-  {
-    const size_t indexInt = static_cast<size_t>(phase);
-    const float frac = phase - static_cast<float>(indexInt);
-    float acc = 0.0f;
-
-    for (int tap = -static_cast<int>(halfKernel); tap <= static_cast<int>(halfKernel); ++tap)
+    resample.kernelSize = buildKernel(resample.kernel,
+                                      kMaxKernelTaps,
+                                      numTaps,
+                                      normalizedCutoff);
+    if (resample.kernelSize == 0u)
     {
-      int sampleIndex = static_cast<int>(indexInt) + tap;
-      if (sampleIndex < 0)
-      {
-        sampleIndex = 0;
-      }
-      else if (sampleIndex >= static_cast<int>(sourceLength))
-      {
-        sampleIndex = static_cast<int>(sourceLength) - 1;
-      }
-
-      const float weight = lookupKernel(kernel, kernelSize, static_cast<float>(tap) - frac);
-      acc += source[static_cast<size_t>(sampleIndex)] * weight;
+      resample.active = false;
+      return false;
     }
 
-    destination[outIndex++] = acc;
-    phase += safePitch;
+    const size_t halfKernel = resample.kernelSize / 2u;
+    if (resample.sourceLength <= (halfKernel + 1u))
+    {
+      resample.active = false;
+      return false;
+    }
+
+    resample.maxPhase = static_cast<float>(resample.sourceLength - halfKernel - 1u);
+    if (resample.phase > resample.maxPhase)
+    {
+      resample.phase = 0.0f;
+    }
   }
 
-  if (outIndex == 0u)
+  if (resample.phase > resample.maxPhase)
   {
-    return 0u;
+    resample.active = false;
+    return false;
   }
 
-  const float targetRms = computeRms(source, sourceLength);
-  if (targetRms > 0.0f)
+  const size_t halfKernel = resample.kernelSize / 2u;
+  const size_t indexInt = static_cast<size_t>(resample.phase);
+  const float frac = resample.phase - static_cast<float>(indexInt);
+  float acc = 0.0f;
+
+  for (int tap = -static_cast<int>(halfKernel); tap <= static_cast<int>(halfKernel); ++tap)
   {
-    normalizeBuffer(destination, outIndex, targetRms);
+    int sampleIndex = static_cast<int>(indexInt) + tap;
+    if (sampleIndex < 0)
+    {
+      sampleIndex = 0;
+    }
+    else if (sampleIndex >= static_cast<int>(resample.sourceLength))
+    {
+      sampleIndex = static_cast<int>(resample.sourceLength) - 1;
+    }
+
+    const float weight = lookupKernel(resample.kernel,
+                                      resample.kernelSize,
+                                      static_cast<float>(tap) - frac);
+    acc += resample.source[static_cast<size_t>(sampleIndex)] * weight;
   }
 
-  const float effectiveRate = sampleRate_ * safePitch;
-  const float minRate = (effectiveRate < sampleRate_) ? effectiveRate : sampleRate_;
-  const float nyquist = 0.5f * (minRate > 0.0f ? minRate : sampleRate_);
-  applyOnePoleLowpass(destination, outIndex, sampleRate_, nyquist * normalizedCutoff);
+  float filtered = acc;
+  if (resample.lowpassA0 != 1.0f || resample.lowpassAlpha != 0.0f)
+  {
+    filtered = resample.lowpassA0 * acc + resample.lowpassAlpha * resample.lowpassState;
+    resample.lowpassState = filtered;
+  }
 
-  return outIndex;
+  resample.phase += resample.pitchRatio;
+  if (resample.phase > resample.maxPhase)
+  {
+    resample.active = false;
+  }
+
+  outSample = filtered;
+  return true;
 }

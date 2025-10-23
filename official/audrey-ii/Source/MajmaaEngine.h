@@ -19,7 +19,9 @@ class Engine {
         static constexpr size_t kNumberPads = 12;  // Number of pads per voice
         static constexpr size_t kNumberMprInstances = 3;  // Number of MPR instances
         static constexpr size_t kMaxSampleFrames = 2 * 48000; // Cached frames per note (~2s @ 48k)
-        static constexpr size_t kMaxKernelTaps = 128;     // FIR taps used for resampling
+        static constexpr size_t kMaxKernelTaps = 4;     // FIR taps used for resampling
+        static constexpr size_t kResampleKernelTaps = 4;
+        static constexpr float  kResampleCutoff = 0.45f;
 
         struct Parameters {
             float accent       = 0.0f;  // 0.0 - 1.0
@@ -42,16 +44,21 @@ class Engine {
 
         void processAudioSample(float &outL, float &outR);
 
-        size_t renderResampledNote(const float* source,
-                                   size_t sourceLength,
-                                   float pitchRatio,
-                                   float* destination,
-                                   size_t destinationCapacity,
-                                   size_t numTaps = 96,
-                                   float normalizedCutoff = 0.45f) const;
-
     private:
         struct PadPlaybackState {
+            struct ResampleState {
+                bool active = false;
+                const float* source = nullptr;
+                size_t sourceLength = 0;
+                float pitchRatio = 1.0f;
+                size_t kernelSize = 0;
+                float phase = 0.0f;
+                float maxPhase = 0.0f;
+                float lowpassState = 0.0f;
+                float lowpassAlpha = 0.0f;
+                float lowpassA0 = 1.0f;
+                float kernel[kMaxKernelTaps] = {0.0f};
+            } resample;
             bool active = false;
             bool fromCache = false;
             bool recording = false;
@@ -61,7 +68,6 @@ class Engine {
             uint8_t basePad = 0;
             float* playbackBuffer = nullptr;
             size_t playbackLength = 0;
-            float* resampleBuffer = nullptr;
         };
 
         float sampleRate_;
@@ -102,6 +108,10 @@ class Engine {
                                         uint8_t targetMidi,
                                         int pad,
                                         PadPlaybackState &state);
+        bool renderResampledNote(PadPlaybackState &state,
+                                 float &outSample,
+                                 size_t numTaps = kResampleKernelTaps,
+                                 float normalizedCutoff = kResampleCutoff) const;
 
         Engine(const Engine &other) = delete;
         Engine(Engine &&other) = delete;
