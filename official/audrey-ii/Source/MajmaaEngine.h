@@ -14,14 +14,11 @@ namespace MajmaaSynth {
 class Engine {
 
     public:
-        static constexpr size_t kNumberLiveVoices = 3; // Number of polyphonic voices
+        static constexpr size_t kNumberLiveVoices = 3; // Number of live synthesized voices
         static constexpr size_t kNumberRetriggers = 5; // Number of times a voice can be retriggered after being sampled
         static constexpr size_t kNumberPads = 12;  // Number of pads per voice
         static constexpr size_t kNumberMprInstances = 3;  // Number of MPR instances
         static constexpr size_t kMaxSampleFrames = 2 * 48000; // Cached frames per note (~2s @ 48k)
-        static constexpr size_t kMaxKernelTaps = 4;     // FIR taps used for resampling
-        static constexpr size_t kResampleKernelTaps = 4;
-        static constexpr float  kResampleCutoff = 0.45f;
 
         struct Parameters {
             float accent       = 0.0f;  // 0.0 - 1.0
@@ -46,37 +43,23 @@ class Engine {
 
     private:
         struct PadPlaybackState {
-            struct ResampleState {
-                bool active = false;
-                const float* source = nullptr;
-                size_t sourceLength = 0;
-                float pitchRatio = 1.0f;
-                size_t kernelSize = 0;
-                float phase = 0.0f;
-                float maxPhase = 0.0f;
-                float lowpassState = 0.0f;
-                float lowpassAlpha = 0.0f;
-                float lowpassA0 = 1.0f;
-                float kernel[kMaxKernelTaps] = {0.0f};
-            } resample;
-            bool active = false;
-            bool fromCache = false;
-            bool recording = false;
-            uint8_t age = 0;
-            size_t writeIndex = 0;
-            size_t playbackIndex = 0;
-            uint8_t basePad = 0;
-            float* playbackBuffer = nullptr;
-            size_t playbackLength = 0;
+            bool active = false;    // Is the pad currently active (playing or recording)
+            bool fromCache = false;  // Is the pad playback from cache
+            bool recording = false;  // Is the pad currently being recorded
+            uint8_t age = 0;         // Age of the pad (for retriggering)
+            size_t writeIndex = 0;   // Write index for recording
+            size_t playbackIndex = 0; // Playback index for playing back
+            float* playbackBuffer = nullptr; // Buffer for playback
+            size_t playbackLength = 0; // Length of the playback buffer
         };
 
         float sampleRate_;
-
         Parameters params_;
 
         // String synth voice
         std::array<Vox, kNumberLiveVoices> strings_;
 
+        // Pad playback states
         std::array<std::array<PadPlaybackState, kNumberPads>, kNumberLiveVoices> padStates_;
 
         // Scales (as MIDI notes) for the 3 instrument instances
@@ -98,20 +81,15 @@ class Engine {
         void setReverbMix(const float reverbMix);
         void setVolume(const float volume);
 
-    size_t countLiveNotes() const;
-        void triggerNoteResampleWrapper(size_t length,
-                                        uint8_t instance,
-                                        uint8_t targetMidi,
-                                        int closestPad,
-                                        PadPlaybackState &state);
+        size_t countLiveNotes() const;
+        void triggerNotePlaybackWrapper(size_t length,
+                    uint8_t instance,
+                    uint8_t pad,
+                    PadPlaybackState &state);
         void triggerNoteLiveNoteWrapper(uint8_t instance,
                                         uint8_t targetMidi,
                                         int pad,
                                         PadPlaybackState &state);
-        bool renderResampledNote(PadPlaybackState &state,
-                                 float &outSample,
-                                 size_t numTaps = kResampleKernelTaps,
-                                 float normalizedCutoff = kResampleCutoff) const;
 
         Engine(const Engine &other) = delete;
         Engine(Engine &&other) = delete;
