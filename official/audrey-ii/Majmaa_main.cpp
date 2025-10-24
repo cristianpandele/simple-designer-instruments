@@ -41,14 +41,25 @@ void init()
         lim.Init();
     }
 
-    hw.StartAudio(AudioCallback);
-
 #if DEBUG
     Log::StartLog(false);
     log_timer.Init();
     touch_timer.Init();
     loadMeter.Init(hw.AudioSampleRate(), hw.AudioBlockSize());
+
+    Log::PrintLine("Initializing the individual pad sounds...");
 #endif
+
+    // Pre-trigger every pad to warm caches before audio starts
+    for (uint8_t voice = 0; voice < Engine::kNumberLiveVoices; ++voice)
+    {
+        for (uint8_t pad = 0; pad < Engine::kNumberPads; ++pad)
+        {
+            engine.triggerNote(voice, pad);
+        }
+    }
+
+    hw.StartAudio(AudioCallback);
 }
 
 int main(void)
