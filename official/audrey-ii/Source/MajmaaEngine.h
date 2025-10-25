@@ -2,8 +2,6 @@
 #ifndef MAJMAA_ENGINE_H
 #define MAJMAA_ENGINE_H
 
-#include <cstddef>
-#include <cstdint>
 #include <array>
 #include <daisysp.h>
 #include "vox.h"
@@ -18,7 +16,8 @@ class Engine {
         static constexpr size_t kNumberRetriggers = 5; // Number of times a voice can be retriggered after being sampled
         static constexpr size_t kNumberPads = 12;  // Number of pads per voice
         static constexpr size_t kNumberMprInstances = 3;  // Number of MPR instances
-        static constexpr size_t kMaxSampleFrames = 2 * 48000; // Cached frames per note (~2s @ 48k)
+        static constexpr size_t kMaxBowLengthSec = 4; // Maximum duration of bowed excitation in seconds
+        static constexpr size_t kMaxSampleFrames = kMaxBowLengthSec * 48000; // Cached frames per note (~2s @ 48k)
 
         struct Parameters {
             float accent       = 0.0f;  // 0.0 - 1.0

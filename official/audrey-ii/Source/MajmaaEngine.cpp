@@ -1,8 +1,6 @@
 #include "MajmaaEngine.h"
 #include "Utils.h"
 
-#include <cstdlib>
-
 using namespace majmaa;
 using namespace majmaa::MajmaaSynth;
 using namespace daisysp;
@@ -158,11 +156,21 @@ void Engine::triggerNoteLiveNoteWrapper(const uint8_t instance,
   const float structure = humanize(params_.structure);
   const float damping = humanize(params_.damping);
   const float accent = humanize(params_.accent);
+  const float bowLength = humanize(1.0f) * kMaxBowLengthSec;
 
   strings_[instance].setBrightness(brightness);
   strings_[instance].setStructure(structure);
   strings_[instance].setDamping(damping);
-  strings_[instance].NoteOn(mtof(targetNote), accent);
+
+  Vox::BowParameters bow{};
+  // Only enable bowed excitation for the last live voice.
+  if(instance == kNumberLiveVoices - 1)
+  {
+    bow.bowSeconds = bowLength;
+    bow.bowStrength = accent;
+  }
+
+  strings_[instance].NoteOn(mtof(targetNote), accent, bow);
 
   state.active = true;
   state.age = 0;
