@@ -70,7 +70,9 @@ class Engine {
             // Instance 1 - D minor - Oud 2
             {62, 64, 65, 67, 69, 70, 72, 74, 76, 77, 79, 81},
             // Instance 2 - C Major Pentatonic - Cellos
-            {55, 57, 59, 60, 62, 64, 66, 67, 69, 71, 72, 74}
+            {36, 38, 40, 43, 45, 48, 50, 52, 55, 57, 60, 62},
+            // Instance 3 - G Major (Ajam) - Oud
+            // {55, 57, 59, 60, 62, 64, 66, 67, 69, 71, 72, 74}
         }};
 
         void setAccent(const float accent);
