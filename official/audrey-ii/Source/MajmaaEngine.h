@@ -5,6 +5,7 @@
 #include <array>
 #include <daisysp.h>
 #include "vox.h"
+#include "Constants.h"
 
 namespace majmaa
 {
@@ -15,12 +16,8 @@ namespace majmaa
         {
 
             public:
-                static constexpr size_t kNumberLiveVoices = 3;                       // Number of live synthesized voices
-                static constexpr size_t kNumberRetriggers = 5;                       // Number of times a voice can be retriggered after being sampled
-                static constexpr size_t kNumberPads = 12;                            // Number of pads per voice
-                static constexpr size_t kNumberMprInstances = 3;                     // Number of MPR instances
-                static constexpr size_t kMaxBowLengthSec = 4;                        // Maximum duration of bowed excitation in seconds
-                static constexpr size_t kMaxSampleFrames = kMaxBowLengthSec * 48000; // Cached frames per note (~2s @ 48k)
+                static constexpr size_t kNumberLiveStrings = 3;                       // Number of live synthesized strings
+                static constexpr size_t kMaxCacheSamples  = kMaxBowLengthSec * 48000; // Cached samples per note (~2s @ 48k)
 
                 struct Parameters
                 {
@@ -61,23 +58,10 @@ namespace majmaa
                 Parameters params_;
 
                 // String synth voice
-                std::array<Vox, kNumberLiveVoices> strings_;
+                std::array<Vox, kNumberMprInstances> strings_;
 
                 // Pad playback states
-                std::array<std::array<PadPlaybackState, kNumberPads>, kNumberLiveVoices> padStates_;
-
-                // Scales (as MIDI notes) for the 3 instrument instances
-                const std::array<std::array<uint8_t, kNumberPads>, kNumberLiveVoices> scales_ =
-                    {{
-                        // Instance 0 - A minor Harmonic (Hijaz) - Oud 1
-                        {57, 59, 60, 62, 64, 65, 68, 69, 71, 72, 74, 76},
-                        // Instance 1 - D minor - Oud 2
-                        {62, 64, 65, 67, 69, 70, 72, 74, 76, 77, 79, 81},
-                        // Instance 2 - C Major Pentatonic - Cellos
-                        {36, 38, 40, 43, 45, 48, 50, 52, 55, 57, 60, 62},
-                        // Instance 3 - G Major (Ajam) - Oud
-                        // {55, 57, 59, 60, 62, 64, 66, 67, 69, 71, 72, 74}
-                    }};
+                std::array<std::array<PadPlaybackState, kNumberMprPads>, kNumberMprInstances> padStates_;
 
                 void setAccent(const float accent);
                 void setBrightness(const float brightness);

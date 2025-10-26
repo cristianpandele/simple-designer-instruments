@@ -52,9 +52,9 @@ void init()
 #endif
 
     // Pre-trigger every pad to warm caches before audio starts
-    for (uint8_t voice = 0; voice < Engine::kNumberLiveVoices; ++voice)
+    for (uint8_t voice = 0; voice < Engine::kNumberLiveStrings; ++voice)
     {
-        for (uint8_t pad = 0; pad < Engine::kNumberPads; ++pad)
+        for (uint8_t pad = 0; pad < kNumberMprPads; ++pad)
         {
             engine.triggerNote(voice, pad);
         }
@@ -123,16 +123,16 @@ void handleAnalogControls(Controls &controls, Engine &engine)
 
 void handleDigitalControls(Controls &controls)
 {
-    for (size_t instance = 0; instance < Controls::kNumMprInstances; instance++)
+    for (size_t instance = 0; instance < kNumberMprInstances; instance++)
     {
         padTouchStates[instance] = controls.GetMpr121TouchStates(instance);
 
-        for (size_t i = 0; i < Controls::kNumMprPads; i++)
+        for (size_t i = 0; i < kNumberMprPads; i++)
         {
             if (hasTouchStateChangedToPressed(padTouchStates[instance], padTouchStatesPrev[instance], i))
             {
 #if DEBUG
-                Log::PrintLine("Pad %d on instance %d pressed", i, instance);
+                // Log::PrintLine("Pad %d on instance %d pressed", i, instance);
 #endif
                 engine.triggerNote(instance, i);
             }

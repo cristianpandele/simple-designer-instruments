@@ -38,8 +38,8 @@ static SmoothValue reverbMixKnobVal = SmoothValue(0.0f, 75.0f, kSamplePeriodMs *
 static SmoothValue volumeKnobVal = SmoothValue(0.5f, 75.0f, kSamplePeriodMs *kBlockSize);
 
 // Pad touch states
-static std::bitset<16> padTouchStates[controls.kNumMprInstances];
-static std::bitset<16> padTouchStatesPrev[controls.kNumMprInstances];
+static std::bitset<16> padTouchStates[kNumberMprInstances];
+static std::bitset<16> padTouchStatesPrev[kNumberMprInstances];
 
 daisy::StopwatchTimer log_timer;
 daisy::StopwatchTimer touch_timer;

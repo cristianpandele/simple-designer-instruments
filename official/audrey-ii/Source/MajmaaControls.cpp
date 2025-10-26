@@ -44,12 +44,12 @@ void Controls::init(DaisySeed &hw, Engine &engine)
 {
     // --- MPR121 (I2C) ---
     Mpr121I2C::Config mpr_cfg;
-    const uint8_t mprAddr[kNumMprInstances] = {0x5A, 0x5C, 0x5B};
+    const uint8_t mprAddr[kNumberMprInstances] = {0x5A, 0x5C, 0x5B};
     mpr_cfg.transport_config.periph = I2CHandle::Config::Peripheral::I2C_1;
     mpr_cfg.transport_config.scl = kI2CSclPin;
     mpr_cfg.transport_config.sda = kI2CSdaPin;
     mpr_cfg.transport_config.speed = I2CHandle::Config::Speed::I2C_400KHZ;
-    for (size_t i = 0; i < kNumMprInstances; i++)
+    for (size_t i = 0; i < kNumberMprInstances; i++)
     {
         if (i == 0)
         {

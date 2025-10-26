@@ -4,6 +4,7 @@
 
 #include <daisy.h>
 #include <daisy_seed.h>
+#include "Constants.h"
 #include "MajmaaEngine.h"
 
 namespace majmaa
@@ -15,9 +16,6 @@ namespace majmaa
         {
 
             public:
-                static const size_t kNumMprInstances = 3;
-                static const size_t kNumMprPads = 12;
-
                 // Identifies a parameter of the synth engine
                 /// The order here is the same order as the ADC pin configs in the cpp file
                 enum AnalogControlId
@@ -45,7 +43,7 @@ namespace majmaa
 
                 daisy::AnalogControl controls_[kNumAdcChannels];
 
-                daisy::Mpr121I2C mpr121_[kNumMprInstances];
+                daisy::Mpr121I2C mpr121_[kNumberMprInstances];
 
                 void initADCs(daisy::DaisySeed &hw);
             };

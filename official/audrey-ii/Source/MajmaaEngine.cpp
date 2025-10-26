@@ -9,22 +9,14 @@ static DSY_SDRAM_BSS daisysp::ReverbSc reverb_;
 
 namespace
 {
-    constexpr size_t kCacheVoices = Engine::kNumberLiveVoices;
-    constexpr size_t kCachePads = Engine::kNumberPads;
-    constexpr size_t kCacheFrames = Engine::kMaxSampleFrames;
-
-    static DSY_SDRAM_BSS float noteCacheData[kCacheVoices][kCachePads][kCacheFrames];
-    static size_t noteCacheLength[kCacheVoices][kCachePads];
-    static uint8_t noteCacheMidi[kCacheVoices][kCachePads];
-    static bool noteCacheValid[kCacheVoices][kCachePads];
+    static DSY_SDRAM_BSS float noteCacheData[kNumberMprInstances][kNumberMprPads][Engine::kMaxCacheSamples];
+    static size_t noteCacheLength[kNumberMprInstances][kNumberMprPads];
+    static uint8_t noteCacheMidi[kNumberMprInstances][kNumberMprPads];
+    static bool noteCacheValid[kNumberMprInstances][kNumberMprPads];
 } // namespace
 
 void Engine::init(const float sampleRate)
 {
-    static_assert(kNumberLiveVoices == kCacheVoices, "Voice cache mismatch");
-    static_assert(kNumberPads == kCachePads, "Pad cache mismatch");
-    static_assert(kMaxSampleFrames == kCacheFrames, "Frame cache mismatch");
-
     sampleRate_ = sampleRate;
 
     // Initialize the voices
@@ -37,14 +29,14 @@ void Engine::init(const float sampleRate)
         s.SetMult(1.0f);
     }
 
-    for (size_t inst = 0; inst < kCacheVoices; ++inst)
+    for (size_t inst = 0; inst < kNumberMprInstances; ++inst)
     {
-        for (size_t pad = 0; pad < kCachePads; ++pad)
+        for (size_t pad = 0; pad < kNumberMprPads; ++pad)
         {
             noteCacheValid[inst][pad] = false;
             noteCacheLength[inst][pad] = 0;
             noteCacheMidi[inst][pad] = scales_[inst][pad];
-            if (inst < kNumberLiveVoices && pad < kNumberPads)
+            if (inst < kNumberLiveStrings && pad < kNumberMprPads)
             {
                 PadPlaybackState &state = padStates_[inst][pad];
                 state = {};
@@ -109,9 +101,9 @@ void Engine::setVolume(const float volume)
 size_t Engine::countLiveNotes() const
 {
     size_t liveNotes = 0;
-    for (size_t voice = 0; voice < kNumberLiveVoices; ++voice)
+    for (size_t voice = 0; voice < kNumberLiveStrings; ++voice)
     {
-        for (size_t pad = 0; pad < kNumberPads; ++pad)
+        for (size_t pad = 0; pad < kNumberMprPads; ++pad)
         {
             if (padStates_[voice][pad].recording)
             {
@@ -128,7 +120,7 @@ void Engine::triggerNotePlaybackWrapper(const size_t length,
                                         PadPlaybackState &state)
 {
     // Validate length and indices
-    if (length == 0u || instance >= kNumberLiveVoices || pad >= kNumberPads)
+    if (length == 0u || instance >= kNumberLiveStrings || pad >= kNumberMprPads)
     {
         state.active = false;
         state.fromCache = false;
@@ -172,7 +164,7 @@ void Engine::triggerNoteLiveNoteWrapper(const uint8_t instance,
 
     Vox::BowParameters bow{};
     // Only enable bowed excitation for the last live voice.
-    if (instance == kNumberLiveVoices - 1)
+    if (instance == kNumberLiveStrings - 1)
     {
         bow.bowSeconds = bowLength;
         bow.bowStrength = accent;
@@ -197,7 +189,7 @@ void Engine::triggerNoteLiveNoteWrapper(const uint8_t instance,
 
 void Engine::triggerNote(const uint8_t instance, const uint8_t pad)
 {
-    if (instance >= kNumberLiveVoices || pad >= kNumberPads)
+    if (instance >= kNumberLiveStrings || pad >= kNumberMprPads)
     {
         // Invalid instance or pad
         return;
@@ -213,7 +205,7 @@ void Engine::triggerNote(const uint8_t instance, const uint8_t pad)
     const uint8_t targetNote = scales_[instance][pad];
 
     // If too many live notes, or cached note available, use cache
-    const bool cacheReady = ((countLiveNotes() >= kNumberLiveVoices) ||
+    const bool cacheReady = ((countLiveNotes() >= kNumberLiveStrings) ||
                              (noteCacheValid[instance][pad] &&
                               noteCacheMidi[instance][pad] == targetNote &&
                               state.age < kNumberRetriggers)
@@ -241,7 +233,7 @@ void Engine::processAudioSample(float &outL, float &outR)
 
     for (size_t voice = 0; voice < kNumberMprInstances; ++voice)
     {
-        for (size_t pad = 0; pad < kNumberPads; ++pad)
+        for (size_t pad = 0; pad < kNumberMprPads; ++pad)
         {
             auto &state = padStates_[voice][pad];
             float sampleValue = 0.0f;
@@ -249,7 +241,7 @@ void Engine::processAudioSample(float &outL, float &outR)
             if (state.recording)
             {
                 // Recording live synthesized note into cache
-                if (state.writeIndex < kCacheFrames)
+                if (state.writeIndex < kMaxCacheSamples)
                 {
                     const float liveSample = strings_[voice].processAudioSample();
                     noteCacheData[voice][pad][state.writeIndex] = liveSample;
