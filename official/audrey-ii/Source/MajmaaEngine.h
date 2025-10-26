@@ -19,23 +19,12 @@ namespace majmaa
                 static constexpr size_t kNumberLiveStrings = 3;                       // Number of live synthesized strings
                 static constexpr size_t kMaxCacheSamples  = kMaxBowLengthSec * 48000; // Cached samples per note (~2s @ 48k)
 
-                struct Parameters
-                {
-                    float accent = 0.0f;     // 0.0 - 1.0
-                    float brightness = 0.5f; // 0.0 - 1.0
-                    float damping = 0.5f;    // 0.0 - 1.0
-                    float structure = 0.5f;  // 0.0 - 1.0
-                    float reverbFb = 0.0f;   // 0.0 - 1.0
-                    float reverbMix = 0.0f;  // 0.0 - 1.0
-                    float volume = 0.5f;     // 0.0 - 1.0
-                };
-
                 Engine() = default;
                 ~Engine() = default;
 
                 void init(const float sampleRate);
 
-                void setParameters(const Parameters &params);
+                void setParameters(const Parameters &params, float reverbFb, float reverbMix, float volume, const uint8_t instance);
 
                 void triggerNote(const uint8_t instance, const uint8_t pad);
 
@@ -55,7 +44,7 @@ namespace majmaa
                 };
 
                 float sampleRate_;
-                Parameters params_;
+                std::array<Parameters, kNumberMprInstances> params_ = defaultParams_;
 
                 // String synth voice
                 std::array<Vox, kNumberMprInstances> strings_;
@@ -63,10 +52,17 @@ namespace majmaa
                 // Pad playback states
                 std::array<std::array<PadPlaybackState, kNumberMprPads>, kNumberMprInstances> padStates_;
 
-                void setAccent(const float accent);
-                void setBrightness(const float brightness);
-                void setDamping(const float damping);
-                void setStructure(const float structure);
+                // Reverb effect
+                float reverbMix_ = 0.0f;
+                float reverbFb_ = 0.5f;
+
+                // Output volume
+                float outVolume_ = 0.5f;
+
+                void setAccent(const float accent, const uint8_t instance);
+                void setBrightness(const float brightness, const uint8_t instance);
+                void setDamping(const float damping, const uint8_t instance);
+                void setStructure(const float structure, const uint8_t instance);
                 void setReverbFeedback(const float reverbFb);
                 void setReverbMix(const float reverbMix);
                 void setVolume(const float volume);

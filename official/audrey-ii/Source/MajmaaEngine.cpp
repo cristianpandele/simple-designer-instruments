@@ -51,51 +51,51 @@ void Engine::init(const float sampleRate)
     reverb_.SetFeedback(0.5f);
 }
 
-void Engine::setParameters(const Parameters &params)
+void Engine::setParameters(const Parameters &params, float reverbFb, float reverbMix, float volume, const uint8_t instance)
 {
-    setAccent(params.accent);
-    setBrightness(params.brightness);
-    setDamping(params.damping);
-    setStructure(params.structure);
-    setReverbFeedback(params.reverbFb);
-    setReverbMix(params.reverbMix);
-    setVolume(params.volume);
+    setAccent(params.accent, instance);
+    setBrightness(params.brightness, instance);
+    setDamping(params.damping, instance);
+    setStructure(params.structure, instance);
+    setReverbFeedback(reverbFb);
+    setReverbMix(reverbMix);
+    setVolume(volume);
 }
 
-void Engine::setAccent(const float accent)
+void Engine::setAccent(const float accent, const uint8_t instance)
 {
-    params_.accent = unitclamp(accent);
+    params_[instance].accent = unitclamp(accent);
 }
 
-void Engine::setBrightness(const float brightness)
+void Engine::setBrightness(const float brightness, const uint8_t instance)
 {
-    params_.brightness = unitclamp(brightness);
+    params_[instance].brightness = unitclamp(brightness);
 }
 
-void Engine::setDamping(const float damping)
+void Engine::setDamping(const float damping, const uint8_t instance)
 {
-    params_.damping = unitclamp(damping);
+    params_[instance].damping = unitclamp(damping);
 }
 
-void Engine::setStructure(const float structure)
+void Engine::setStructure(const float structure, const uint8_t instance)
 {
-    params_.structure = unitclamp(structure);
+    params_[instance].structure = unitclamp(structure);
 }
 
 void Engine::setReverbFeedback(const float reverbFb)
 {
-    params_.reverbFb = unitclamp(reverbFb);
-    reverb_.SetFeedback(fmap(params_.reverbFb, 0.5f, 1.0f));
+    reverbFb_ = unitclamp(reverbFb);
+    reverb_.SetFeedback(fmap(reverbFb_, 0.5f, 1.0f));
 }
 
 void Engine::setReverbMix(const float reverbMix)
 {
-    params_.reverbMix = unitclamp(reverbMix);
+    reverbMix_ = unitclamp(reverbMix);
 }
 
-void Engine::setVolume(const float volume)
+void Engine::setVolume(float volume)
 {
-    params_.volume = unitclamp(volume);
+    outVolume_ = unitclamp(volume);
 }
 
 size_t Engine::countLiveNotes() const
@@ -152,10 +152,10 @@ void Engine::triggerNoteLiveNoteWrapper(const uint8_t instance,
         return unitclamp(value * deviation);
     };
 
-    const float brightness = humanize(params_.brightness);
-    const float structure = humanize(params_.structure);
-    const float damping = humanize(params_.damping);
-    const float accent = humanize(params_.accent);
+    const float brightness = humanize(params_[instance].brightness);
+    const float structure = humanize(params_[instance].structure);
+    const float damping = humanize(params_[instance].damping);
+    const float accent = humanize(params_[instance].accent);
     const float bowLength = humanize(1.0f) * kMaxBowLengthSec;
 
     strings_[instance].setBrightness(brightness);
@@ -309,10 +309,10 @@ void Engine::processAudioSample(float &outL, float &outR)
     reverb_.Process(dryL, dryR, &verbL, &verbR);
 
     // Apply reverb mix
-    outL = lerp(dryL, verbL, params_.reverbMix);
-    outR = lerp(dryR, verbR, params_.reverbMix);
+    outL = lerp(dryL, verbL, reverbMix_);
+    outR = lerp(dryR, verbR, reverbMix_);
 
     // Apply volume
-    outL *= params_.volume;
-    outR *= params_.volume;
+    outL *= outVolume_;
+    outR *= outVolume_;
 }

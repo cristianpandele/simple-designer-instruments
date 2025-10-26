@@ -24,6 +24,48 @@ namespace majmaa
             // Instance 3 - G Major (Ajam) - Oud
             // {55, 57, 59, 60, 62, 64, 66, 67, 69, 71, 72, 74}
         }};
+
+    struct Parameters
+    {
+        float accent = 0.0f;     // 0.0 - 1.0
+        float brightness = 0.5f; // 0.0 - 1.0
+        float damping = 0.5f;    // 0.0 - 1.0
+        float structure = 0.5f;  // 0.0 - 1.0
+        float reverbFb = 0.0f;   // 0.0 - 1.0
+        float reverbMix = 0.0f;  // 0.0 - 1.0
+        float volume = 0.5f;     // 0.0 - 1.0
+    };
+
+    // Set to 0 after good parameters are found
+    #define KNOBS_SET_STRING_PARAMETERS 1
+
+    const std::array<Parameters, kNumberMprInstances> defaultParams_ =
+        {{
+            // Instance 0
+            {.accent = 0.0f,
+             .brightness = 0.5f,
+             .damping = 0.5f,
+             .structure = 0.5f,
+             .reverbFb = 0.0f,
+             .reverbMix = 0.0f,
+             .volume = 0.5f},
+            // Instance 1
+            {.accent = 0.0f,
+             .brightness = 0.5f,
+             .damping = 0.5f,
+             .structure = 0.5f,
+             .reverbFb = 0.0f,
+             .reverbMix = 0.0f,
+             .volume = 0.5f},
+            // Instance 2
+            {.accent = 0.0f,
+             .brightness = 0.5f,
+             .damping = 0.5f,
+             .structure = 0.5f,
+             .reverbFb = 0.0f,
+             .reverbMix = 0.0f,
+             .volume = 0.5f},
+        }};
 }
 
 #endif

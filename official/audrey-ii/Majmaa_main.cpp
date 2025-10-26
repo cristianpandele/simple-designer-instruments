@@ -110,14 +110,23 @@ void handleAnalogControls(Controls &controls, Engine &engine)
         structureKnobVal.isSmoothing() || reverbFbKnobVal.isSmoothing() || reverbMixKnobVal.isSmoothing() ||
         volumeKnobVal.isSmoothing())
     {
-        Engine::Parameters params = {.accent = accentKnobVal.getSmoothVal(),
-                                     .brightness = brightnessKnobVal.getSmoothVal(),
-                                     .damping = dampingKnobVal.getSmoothVal(),
-                                     .structure = structureKnobVal.getSmoothVal(),
-                                     .reverbFb = reverbFbKnobVal.getSmoothVal(),
-                                     .reverbMix = reverbMixKnobVal.getSmoothVal(),
-                                     .volume = volumeKnobVal.getSmoothVal()};
-        engine.setParameters(params);
+        Parameters params;
+
+#if (KNOBS_SET_STRING_PARAMETERS == 1)
+        params = {.accent = accentKnobVal.getSmoothVal(),
+                  .brightness = brightnessKnobVal.getSmoothVal(),
+                  .damping = dampingKnobVal.getSmoothVal(),
+                  .structure = structureKnobVal.getSmoothVal(),
+              };
+#endif
+
+        float reverbFb = reverbFbKnobVal.getSmoothVal();
+        float reverbMix = reverbMixKnobVal.getSmoothVal();
+        float volume = volumeKnobVal.getSmoothVal();
+        for (uint8_t instance = 0; instance < kNumberMprInstances; ++instance)
+        {
+            engine.setParameters(params, reverbFb, reverbMix, volume, instance);
+        }
     }
 }
 
