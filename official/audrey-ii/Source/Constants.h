@@ -27,13 +27,13 @@ namespace majmaa
 
     struct Parameters
     {
-        float accent = 0.0f;     // 0.0 - 1.0
-        float brightness = 0.5f; // 0.0 - 1.0
-        float damping = 0.5f;    // 0.0 - 1.0
-        float structure = 0.5f;  // 0.0 - 1.0
-        float reverbFb = 0.0f;   // 0.0 - 1.0
-        float reverbMix = 0.0f;  // 0.0 - 1.0
-        float volume = 0.5f;     // 0.0 - 1.0
+        float accent;     // 0.0 - 1.0
+        float brightness; // 0.0 - 1.0
+        float damping;    // 0.0 - 1.0
+        float structure;  // 0.0 - 1.0
+        float reverbFb;   // 0.0 - 1.0
+        float reverbMix;  // 0.0 - 1.0
+        float volume;     // 0.0 - 1.0
     };
 
     // Set to 0 after good parameters are found
@@ -58,7 +58,7 @@ namespace majmaa
              .reverbMix = 0.0f,
              .volume = 0.5f},
             // Instance 2
-            {.accent = 0.0f,
+            {.accent = 0.1f, // Accent a bit higher for cello - as it is the bow strength
              .brightness = 0.5f,
              .damping = 0.5f,
              .structure = 0.5f,

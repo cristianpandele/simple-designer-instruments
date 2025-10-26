@@ -164,7 +164,7 @@ void Engine::triggerNoteLiveNoteWrapper(const uint8_t instance,
 
     Vox::BowParameters bow{};
     // Only enable bowed excitation for the last live voice.
-    if (instance == kNumberLiveStrings - 1)
+    if (instance == kNumberMprInstances - 1)
     {
         bow.bowSeconds = bowLength;
         bow.bowStrength = accent;

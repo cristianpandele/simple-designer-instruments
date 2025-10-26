@@ -51,12 +51,21 @@ void init()
     Log::PrintLine("Initializing the individual pad sounds...");
 #endif
 
-    // Pre-trigger every pad to warm caches before audio starts
-    for (uint8_t voice = 0; voice < Engine::kNumberLiveStrings; ++voice)
+    // Pre-trigger every pad and run the engine long enough to populate caches before audio starts
+    const size_t warmupSamples = kMaxBowLengthSec * static_cast<size_t>(hw.AudioSampleRate());
+    for (uint8_t voice = 0; voice < kNumberMprInstances; ++voice)
     {
         for (uint8_t pad = 0; pad < kNumberMprPads; ++pad)
         {
             engine.triggerNote(voice, pad);
+            float dummyL = 0.0f;
+            float dummyR = 0.0f;
+            for (size_t i = 0; i < warmupSamples; ++i)
+            {
+                dummyL = 0.0f;
+                dummyR = 0.0f;
+                engine.processAudioSample(dummyL, dummyR);
+            }
         }
     }
 
@@ -97,13 +106,13 @@ void handleAnalogControls(Controls &controls, Engine &engine)
     };
 
     // Smooth Values
-    accentKnobVal = mapControlValue(hw.adc.GetFloat(0));
+    accentKnobVal     = mapControlValue(hw.adc.GetFloat(0));
     brightnessKnobVal = mapControlValue(hw.adc.GetFloat(1));
-    dampingKnobVal = mapControlValue(hw.adc.GetFloat(2));
-    structureKnobVal = mapControlValue(hw.adc.GetFloat(3));
-    reverbFbKnobVal = mapControlValue(hw.adc.GetFloat(4));
-    reverbMixKnobVal = mapControlValue(hw.adc.GetFloat(5));
-    volumeKnobVal = mapControlValue(hw.adc.GetFloat(6));
+    dampingKnobVal    = mapControlValue(hw.adc.GetFloat(2));
+    structureKnobVal  = mapControlValue(hw.adc.GetFloat(3));
+    reverbFbKnobVal   = mapControlValue(hw.adc.GetFloat(4));
+    reverbMixKnobVal  = mapControlValue(hw.adc.GetFloat(5));
+    volumeKnobVal     = mapControlValue(hw.adc.GetFloat(6));
 
     // Only update the engine if any of the values have changed (and thus values are smoothing)
     if (accentKnobVal.isSmoothing() || brightnessKnobVal.isSmoothing() || dampingKnobVal.isSmoothing() ||
