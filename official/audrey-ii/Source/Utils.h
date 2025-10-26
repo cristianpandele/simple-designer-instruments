@@ -47,32 +47,11 @@ namespace majmaa {
         return (1 - t) * a + t * b;
     }
 
-    // Function to test if a touchpad state has changed
-    static bool hasTouchStateChanged(const std::bitset<16> &current, const std::bitset<16> &previous, size_t index)
-    {
-        // Check if the state at the given index has changed
-        return current.test(index) != previous.test(index);
-    }
-
     // Function to test if a touchpad state has changed to pressed
     static bool hasTouchStateChangedToPressed(const std::bitset<16> &current, const std::bitset<16> &previous, size_t index)
     {
         // Check if the state at the given index has changed
         return current.test(index) && !previous.test(index);
-    }
-
-    // Function to test if a touchpad state has changed to released
-    static bool hasTouchStateChangedToReleased(const std::bitset<16> &current, const std::bitset<16> &previous, size_t index)
-    {
-        // Check if the state at the given index has changed
-        return !current.test(index) && previous.test(index);
-    }
-
-    // Function to test if a touchpad is currently pressed
-    static bool isTouchPadPressed(const std::bitset<16> &current, size_t index)
-    {
-        // Check if the Touch pad is pressed
-        return current.test(index);
     }
 
     template <typename T>

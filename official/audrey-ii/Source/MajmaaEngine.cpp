@@ -121,6 +121,7 @@ void Engine::triggerNotePlaybackWrapper(const size_t length,
                                         const uint8_t pad,
                                         PadPlaybackState &state)
 {
+  // Validate length and indices
   if (length == 0u || instance >= kNumberLiveVoices || pad >= kNumberPads)
   {
     state.active = false;
@@ -131,6 +132,7 @@ void Engine::triggerNotePlaybackWrapper(const size_t length,
     return;
   }
 
+  // Set up pad state for playback from cache
   state.active = true;
   state.age += 1;
   state.fromCache = true;
@@ -172,6 +174,7 @@ void Engine::triggerNoteLiveNoteWrapper(const uint8_t instance,
 
   strings_[instance].NoteOn(mtof(targetNote), accent, bow);
 
+  // Set up pad state for recording
   state.active = true;
   state.age = 0;
   state.recording = true;
@@ -180,6 +183,7 @@ void Engine::triggerNoteLiveNoteWrapper(const uint8_t instance,
   state.playbackIndex = 0;
   state.playbackBuffer = nullptr;
   state.playbackLength = 0;
+  // Invalidate previous cache entry
   noteCacheValid[instance][pad] = false;
   noteCacheLength[instance][pad] = 0;
   noteCacheMidi[instance][pad] = targetNote;
@@ -202,13 +206,18 @@ void Engine::triggerNote(const uint8_t instance, const uint8_t pad)
 
   const uint8_t targetNote = scales_[instance][pad];
 
-  const bool cacheReady = noteCacheValid[instance][pad]
-                          && noteCacheMidi[instance][pad] == targetNote
-                          && state.age < kNumberRetriggers;
+  // If too many live notes, or cached note available, use cache
+  const bool cacheReady = ((countLiveNotes() >= kNumberLiveVoices) ||
+                           (noteCacheValid[instance][pad] &&
+                            noteCacheMidi[instance][pad] ==
+                            targetNote && state.age <
+                            kNumberRetriggers)
+                          );
 
   if (cacheReady)
   {
     const size_t length = noteCacheLength[instance][pad];
+    // If cache entry valid, trigger playback from cache
     if (length > 0U)
     {
       triggerNotePlaybackWrapper(length, instance, pad, state);
@@ -216,12 +225,8 @@ void Engine::triggerNote(const uint8_t instance, const uint8_t pad)
     }
   }
 
-  // Fall back to live synthesis and capture the note
-  // Log::PrintLine("Synthesizing note for %d on instance %d!", pad, instance);
-  if (countLiveNotes() < kNumberLiveVoices)
-  {
-    triggerNoteLiveNoteWrapper(instance, targetNote, pad, state);
-  }
+  // Fall back to live synthesis and capture the note if above criteria not met
+  triggerNoteLiveNoteWrapper(instance, targetNote, pad, state);
 }
 
 void Engine::processAudioSample(float &outL, float &outR) {
