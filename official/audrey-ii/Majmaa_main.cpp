@@ -16,7 +16,8 @@ void AudioCallback(AudioHandle::InputBuffer /* in */, AudioHandle::OutputBuffer 
     // Get, smooth and set the current values of all analog controls
     handleAnalogControls(controls, engine);
 
-    for (size_t i=0; i<size; i++) {
+    for (size_t i = 0; i < size; i++)
+    {
         engine.processAudioSample(OUT_L[i], OUT_R[i]);
     }
     limiter[0].ProcessBlock(OUT_L, size, 0.7f);
@@ -67,7 +68,7 @@ int main(void)
     // Initialize the hardware and the engine
     init();
 
-    while(1)
+    while (1)
     {
         // Debug logging
         if (log_timer.HasPassedMs(kDebugLogPeriodMs))
@@ -87,21 +88,22 @@ int main(void)
     }
 }
 
-void handleAnalogControls(Controls& controls, Engine& engine)
+void handleAnalogControls(Controls &controls, Engine &engine)
 {
     // Lambda function: Leave a margin at the low and high ends of the pots
-    auto mapControlValue = [](float value) {
+    auto mapControlValue = [](float value)
+    {
         return unitclamp(map(value, 0.05f, 0.93f, 0.0f, 1.0f));
     };
 
     // Smooth Values
-    accentKnobVal     = mapControlValue(hw.adc.GetFloat(0));
+    accentKnobVal = mapControlValue(hw.adc.GetFloat(0));
     brightnessKnobVal = mapControlValue(hw.adc.GetFloat(1));
-    dampingKnobVal    = mapControlValue(hw.adc.GetFloat(2));
-    structureKnobVal  = mapControlValue(hw.adc.GetFloat(3));
-    reverbFbKnobVal   = mapControlValue(hw.adc.GetFloat(4));
-    reverbMixKnobVal  = mapControlValue(hw.adc.GetFloat(5));
-    volumeKnobVal     = mapControlValue(hw.adc.GetFloat(6));
+    dampingKnobVal = mapControlValue(hw.adc.GetFloat(2));
+    structureKnobVal = mapControlValue(hw.adc.GetFloat(3));
+    reverbFbKnobVal = mapControlValue(hw.adc.GetFloat(4));
+    reverbMixKnobVal = mapControlValue(hw.adc.GetFloat(5));
+    volumeKnobVal = mapControlValue(hw.adc.GetFloat(6));
 
     // Only update the engine if any of the values have changed (and thus values are smoothing)
     if (accentKnobVal.isSmoothing() || brightnessKnobVal.isSmoothing() || dampingKnobVal.isSmoothing() ||

@@ -29,13 +29,13 @@ static Controls controls;
 static Limiter limiter[2];
 
 // Controls
-static SmoothValue accentKnobVal = SmoothValue(0.0f, 75.0f, kSamplePeriodMs * kBlockSize);
-static SmoothValue brightnessKnobVal = SmoothValue(0.5f, 75.0f, kSamplePeriodMs * kBlockSize);
-static SmoothValue dampingKnobVal = SmoothValue(0.5f, 75.0f, kSamplePeriodMs * kBlockSize);
-static SmoothValue structureKnobVal = SmoothValue(0.5f, 75.0f, kSamplePeriodMs * kBlockSize);
-static SmoothValue reverbFbKnobVal = SmoothValue(0.0f, 75.0f, kSamplePeriodMs * kBlockSize);
-static SmoothValue reverbMixKnobVal = SmoothValue(0.0f, 75.0f, kSamplePeriodMs * kBlockSize);
-static SmoothValue volumeKnobVal = SmoothValue(0.5f, 75.0f, kSamplePeriodMs * kBlockSize);
+static SmoothValue accentKnobVal = SmoothValue(0.0f, 75.0f, kSamplePeriodMs *kBlockSize);
+static SmoothValue brightnessKnobVal = SmoothValue(0.5f, 75.0f, kSamplePeriodMs *kBlockSize);
+static SmoothValue dampingKnobVal = SmoothValue(0.5f, 75.0f, kSamplePeriodMs *kBlockSize);
+static SmoothValue structureKnobVal = SmoothValue(0.5f, 75.0f, kSamplePeriodMs *kBlockSize);
+static SmoothValue reverbFbKnobVal = SmoothValue(0.0f, 75.0f, kSamplePeriodMs *kBlockSize);
+static SmoothValue reverbMixKnobVal = SmoothValue(0.0f, 75.0f, kSamplePeriodMs *kBlockSize);
+static SmoothValue volumeKnobVal = SmoothValue(0.5f, 75.0f, kSamplePeriodMs *kBlockSize);
 
 // Pad touch states
 static std::bitset<16> padTouchStates[controls.kNumMprInstances];

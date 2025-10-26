@@ -6,48 +6,50 @@
 #include <daisy_seed.h>
 #include "MajmaaEngine.h"
 
-namespace majmaa {
-namespace MajmaaSynth {
-
-class Controls {
-
-public:
-    static const size_t kNumMprInstances = 3;
-    static const size_t kNumMprPads      = 12;
-
-    // Identifies a parameter of the synth engine
-    /// The order here is the same order as the ADC pin configs in the cpp file
-    enum AnalogControlId
+namespace majmaa
+{
+    namespace MajmaaSynth
     {
-        Accent = 0,
-        Brightness, // 1
-        Damping,    // 2
-        Structure,  // 3
-        ReverbFb,   // 4
-        ReverbMix,  // 5
-        Volume      // 6
-    };
 
-    Controls() = default;
-    ~Controls() = default;
+        class Controls
+        {
 
-    void init(daisy::DaisySeed &hw, Engine &engine);
+            public:
+                static const size_t kNumMprInstances = 3;
+                static const size_t kNumMprPads = 12;
 
-    void Update(daisy::DaisySeed &hw);
+                // Identifies a parameter of the synth engine
+                /// The order here is the same order as the ADC pin configs in the cpp file
+                enum AnalogControlId
+                {
+                    Accent = 0,
+                    Brightness, // 1
+                    Damping,    // 2
+                    Structure,  // 3
+                    ReverbFb,   // 4
+                    ReverbMix,  // 5
+                    Volume      // 6
+                };
 
-    uint16_t GetMpr121TouchStates(uint8_t instance);
+                Controls() = default;
+                ~Controls() = default;
 
-private:
-    static const size_t kNumAdcChannels  = 7;
+                void init(daisy::DaisySeed &hw, Engine &engine);
 
-    daisy::AnalogControl controls_[kNumAdcChannels];
+                void Update(daisy::DaisySeed &hw);
 
-    daisy::Mpr121I2C mpr121_[kNumMprInstances];
+                uint16_t GetMpr121TouchStates(uint8_t instance);
 
-    void initADCs(daisy::DaisySeed &hw);
-};
+            private:
+                static const size_t kNumAdcChannels = 7;
 
-}
+                daisy::AnalogControl controls_[kNumAdcChannels];
+
+                daisy::Mpr121I2C mpr121_[kNumMprInstances];
+
+                void initADCs(daisy::DaisySeed &hw);
+            };
+    }
 }
 
 #endif

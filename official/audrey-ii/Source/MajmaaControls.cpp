@@ -30,17 +30,18 @@ using namespace daisy;
 
 // TODO: Add footprint numbers to these
 
-static constexpr Pin kAccentKnobAdcPin           = seed::A0;
-static constexpr Pin kBrightnessKnobAdcPin       = seed::A1;
-static constexpr Pin kDampingKnobAdcPin          = seed::A2;
-static constexpr Pin kStructureKnobAdcPin        = seed::A3;
-static constexpr Pin kReverbFbKnobAdcPin         = seed::A4;
-static constexpr Pin kReverbMixKnobAdcPin        = seed::A5;
-static constexpr Pin kVolumeKnobAdcPin           = seed::A6;
-static constexpr Pin kI2CSdaPin                  = seed::D12;
-static constexpr Pin kI2CSclPin                  = seed::D11;
+static constexpr Pin kAccentKnobAdcPin = seed::A0;
+static constexpr Pin kBrightnessKnobAdcPin = seed::A1;
+static constexpr Pin kDampingKnobAdcPin = seed::A2;
+static constexpr Pin kStructureKnobAdcPin = seed::A3;
+static constexpr Pin kReverbFbKnobAdcPin = seed::A4;
+static constexpr Pin kReverbMixKnobAdcPin = seed::A5;
+static constexpr Pin kVolumeKnobAdcPin = seed::A6;
+static constexpr Pin kI2CSdaPin = seed::D12;
+static constexpr Pin kI2CSclPin = seed::D11;
 
-void Controls::init(DaisySeed &hw, Engine &engine) {
+void Controls::init(DaisySeed &hw, Engine &engine)
+{
     // --- MPR121 (I2C) ---
     Mpr121I2C::Config mpr_cfg;
     const uint8_t mprAddr[kNumMprInstances] = {0x5A, 0x5C, 0x5B};
@@ -74,7 +75,8 @@ uint16_t Controls::GetMpr121TouchStates(uint8_t instance)
     return mpr121_[instance].Touched();
 }
 
-void Controls::initADCs(DaisySeed &hw) {
+void Controls::initADCs(DaisySeed &hw)
+{
     AdcChannelConfig config[kNumAdcChannels];
 
     config[0].InitSingle(kAccentKnobAdcPin);

@@ -16,10 +16,11 @@
 #define CLAMP(in, mn, mx) MIN(MAX(in, mn), mx)
 
 #ifndef LOG_TARGET
-    #define LOG_TARGET daisy::LOGGER_INTERNAL
+#define LOG_TARGET daisy::LOGGER_INTERNAL
 #endif
 
-namespace majmaa {
+namespace majmaa
+{
 
 #if LOG_ENABLED
     using Log = daisy::Logger<LOG_TARGET>;
@@ -86,14 +87,14 @@ namespace majmaa {
     inline float tanf(const float x)
     {
 #ifdef __arm__
-    return std::tan(x);
-    // float s, c;
-    // arm_sin_cos_f32(x, &s, &c);
-    // return s / c;
+        return std::tan(x);
+        // float s, c;
+        // arm_sin_cos_f32(x, &s, &c);
+        // return s / c;
 #else
-    return std::tanf(x);
+        return std::tanf(x);
 #endif
-}
+    }
 
 }
 
